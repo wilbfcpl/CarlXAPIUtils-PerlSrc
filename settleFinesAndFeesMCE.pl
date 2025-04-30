@@ -73,12 +73,11 @@ unless ( defined $call1 )
     
 my ($patronid, $hashoneseven, $amount, $finedate,$itemid, $name, $status,$btycode,$street1,$notes,$regdate,$editdate,$actdate);
 
-# Read the header row
-$_ = <>;
-chomp;
-INFO "[$local_filename" . ":" . __LINE__ . "]Read Header Row Record $_";
-
-;
+# # Read the header row
+# $_ = <>;
+# chomp;
+# INFO "[$local_filename" . ":" . __LINE__ . "]Read Header Row Record $_";
+# ;
 
 my %ResponseStatus;
 my %SettleFinesAndFeesRequest;
@@ -123,7 +122,7 @@ MCE::Loop::init(
 #INFO "[$local_filename" . ":" . __LINE__ . "]Lines array @lines";
 mce_loop_f {
     
-    $_=<>;	
+
     chomp;
     
     INFO "[$local_filename" . ":" . __LINE__ . "]Record $_ ";
@@ -142,3 +141,5 @@ mce_loop_f {
     }
     
 }  $PATRON_FILE ;
+
+MCE::Loop::finish;

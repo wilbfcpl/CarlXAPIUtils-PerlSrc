@@ -14,13 +14,12 @@
 # Input file filename.csv should have no header row (for Perl MCE) columns
 # $patronid,$noteid,$timestamp, $notetype, $alias
 # DeleteNoteMCE.pl will 
-# Input CSV file columns:
+# Input CSV file $NOTEID_FILE columns:
 # $patronid,$noteid,$timestamp, $notetype, $alias
 #
 #Debug mode- a lot more SOAP messages.
 #
-
-# Uses local copy of CarlX WSDL file PatronAPI.wsdl for interface to PatronAPI request DeletePatronNote
+# Uses local copy of CarlX WSDL file PatronAPI.wsdl for PatronAPI request DeletePatronNote
 #
 # A tool like SOAPUI can provide a sandbox for the WSDL file and PatronAPI requests.
 #
@@ -51,7 +50,6 @@ use Log::Log4perl qw(:easy);
 #TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 Log::Log4perl->easy_init($ERROR);
 
-
 #Command line input variable handling
 our ($opt_g,$opt_r,$opt_x);
 getopts('gdrx:');
@@ -62,11 +60,13 @@ use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 my $result ;
 my $trace;
 
-
 #Instrumentation for Print Messages
+# Local filename is the name of this script
+
 my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
+#$NOTEID_FILE is the input file having the noteids for deletion
 my $NOTEID_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
 INFO "[$local_filename" . ":" . __LINE__ . "]$NOTEID_FILE";
