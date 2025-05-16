@@ -49,10 +49,11 @@ use Log::Log4perl qw(:easy);
 #TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 Log::Log4perl->easy_init($TRACE);
 # Reduce number of magic values where possible
-use constant WITHDRAW_SOFTBLOCK_NOTE_TEXT => 'SSC student withdrawn. Please contact FCPL Staff to upgrade library card' ;
-use constant GRAD_SOFTBLOCK_NOTE_TEXT => 'SSC GRAD. Please contact FCPL Staff to upgrade library card' ;
+use constant WITHDRAW_SOFTBLOCK_NOTE_TEXT => 'Student withdrawn from school system - Create/Check for PUBLIC or CHILD Card';
+use constant GRAD_SOFTBLOCK_NOTE_TEXT => 'Graduated student - Create / Check for PUBLIC card' ;
 use constant BIRTHDAY_CONFIRM_NOTE_TEXT => 'Verify Birthdate.' ;
-use constant GRAD_SOFTBLOCK_NOTE_TYPE => 930;
+#use constant GRAD_SOFTBLOCK_NOTE_TYPE => 930;
+use constant GRAD_SOFTBLOCK_NOTE_TYPE => 501;
 use constant WITHDRAW_SOFTBLOCK_NOTE_TYPE => 501;
 use constant INFO_NOTE_TYPE => 501;
 
@@ -100,8 +101,8 @@ my %AddNoteRequest;
 
  
     %AddNote = (
-		NoteType => WITHDRAW_SOFTBLOCK_NOTE_TYPE,
-		NoteText => WITHDRAW_SOFTBLOCK_NOTE_TEXT,
+		NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
+		NoteText => GRAD_SOFTBLOCK_NOTE_TEXT,
 	       );
  
     %AddNoteRequest =

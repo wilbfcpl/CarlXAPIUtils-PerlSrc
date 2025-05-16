@@ -5,7 +5,7 @@
 # Usage: perl [-g] [-r ] [-x] [-i] UpdateItemMCE.pl item_file.csv
 # -g Debug/verbose -r read only , no update, -i in
 # input file example
-# BID, ITEM,BID,OLDCN,NEWCN,[TITLE,AUTHOR,BRANCHCODE,LOCCODE...]
+# BID, ITEM,OLDCN,NEWCN,[TITLE,AUTHOR,BRANCHCODE,LOCCODE...]
 #65661m21982030613321,E SCOTTON - BEGINNING TO READ,ER SCOTTON,Splat the cat makes dad glad /,"Heyman, Alissa",BRU,EPRDR
 
 use strict;
