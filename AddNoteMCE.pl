@@ -49,12 +49,12 @@ use Log::Log4perl qw(:easy);
 #TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 Log::Log4perl->easy_init($TRACE);
 # Reduce number of magic values where possible
-use constant WITHDRAW_SOFTBLOCK_NOTE_TEXT => 'Student withdrawn from school system - Create/Check for PUBLIC or CHILD Card';
+use constant WITHDRAW_SOFTBLOCK_NOTE_TEXT => 'Student withdrawn from school system - Create / Check for PUBLIC or CHILD Card';
 use constant GRAD_SOFTBLOCK_NOTE_TEXT => 'Graduated student - Create / Check for PUBLIC card' ;
 use constant BIRTHDAY_CONFIRM_NOTE_TEXT => 'Verify Birthdate.' ;
 #use constant GRAD_SOFTBLOCK_NOTE_TYPE => 930;
-use constant GRAD_SOFTBLOCK_NOTE_TYPE => 501;
-use constant WITHDRAW_SOFTBLOCK_NOTE_TYPE => 501;
+use constant GRAD_SOFTBLOCK_NOTE_TYPE => 2;
+use constant WITHDRAW_SOFTBLOCK_NOTE_TYPE => 2;
 use constant INFO_NOTE_TYPE => 501;
 
 #Command line input variable handling
@@ -94,16 +94,11 @@ unless ( defined $call1 )
 { die "[$local_filename" . ":" . __LINE__ . "] SOAP/WSDL Error $wsdl $call1 \n" ;
 }
 
-my ($patronid, $noteid, $account ,$notedate, $notetype, $notetext, $branch,$actdate, $lastbranch, $alias);
+my ($patronid, $noteid, $name ,$btype, $notedate, $notetype,  $branch,$actdate, $lastbranch, $alias);
 
 my %AddNote;
 my %AddNoteRequest;
 
- 
-    %AddNote = (
-		NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
-		NoteText => GRAD_SOFTBLOCK_NOTE_TEXT,
-	       );
  
     %AddNoteRequest =
       (
@@ -134,9 +129,17 @@ mce_loop_f {
   INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
 
 
-  ($patronid, $noteid, $account ,$notedate, $notetype, $notetext, $branch,$actdate, $lastbranch, $alias)=split(/,/);
+  ($patronid, $noteid, $name, $btype, $notedate, $notetype,$branch,$actdate, $lastbranch, $alias)=split(/,/);
+
+   %AddNote = ($btype eq "STUDNT")?
+           ( NoteType => WITHDRAW_SOFTBLOCK_NOTE_TYPE,
+	     NoteText => WITHDRAW_SOFTBLOCK_NOTE_TEXT,
+	   ):
+            ( NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
+	     NoteText => GRAD_SOFTBLOCK_NOTE_TEXT,
+	   ) ;
   
-  $AddNote{PatronID}= $patronid;
+    $AddNote{PatronID}= $patronid;
   
   my ($result1,$trace1)=$call1->(%AddNoteRequest);
   if ($trace1->errors) {

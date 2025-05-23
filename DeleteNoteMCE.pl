@@ -71,7 +71,7 @@ my $NOTEID_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 
 INFO "[$local_filename" . ":" . __LINE__ . "]$NOTEID_FILE";
              
-#See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
+#CPAN, web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 my $wsdlfile = 'PatronAPInew.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
@@ -119,7 +119,7 @@ mce_loop_f {
   chomp;
   INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
 
-  ($patronid,$noteid,$timestamp, $notetype, $alias)  = split(/,/);
+  ($patronid,$noteid,$timestamp, $notetype,$alias)  = split(/,/);
   
   $DeleteNoteRequest{NoteID}= $noteid;
   
