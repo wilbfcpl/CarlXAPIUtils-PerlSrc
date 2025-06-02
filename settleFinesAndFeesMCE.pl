@@ -17,8 +17,7 @@ use IO::Prompt::Tiny qw/prompt/;
 Log::Log4perl->easy_init($DEBUG);
 
 use constant CARLX_ID_WB0=> 'wb0';
-#use constant USER_AUTH => 'frederick';
-# use constant PASS_AUTH => 'SwV3QEtjMwSs7fuL';
+
 use constant INSTITUTE_CODE => 1770;
 use constant FCPL_BRANCH=>'HDQ';
 
