@@ -12,12 +12,13 @@ use integer;
 use MCE::Loop;  # Import the MCE::Loop module
 use feature 'say';
 use Log::Log4perl qw(:easy);
+use IO::Prompt::Tiny qw/prompt/;
 
 Log::Log4perl->easy_init($DEBUG);
 
 use constant CARLX_ID_WB0=> 'wb0';
-use constant USER_AUTH => 'frederick';
-use constant PASS_AUTH => 'SwV3QEtjMwSs7fuL';
+#use constant USER_AUTH => 'frederick';
+# use constant PASS_AUTH => 'SwV3QEtjMwSs7fuL';
 use constant INSTITUTE_CODE => 1770;
 use constant FCPL_BRANCH=>'HDQ';
 
@@ -44,7 +45,7 @@ my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
-my $wsdlfile = 'PatronAPI.wsdl';
+my $wsdlfile = 'PatronAPInew.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -55,10 +56,25 @@ unless (defined $wsdl)
 
 my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);
 
-sub basic_auth($$)
-{   my ($request, $trace) = @_;
+my $user = prompt("Username:") ;
+my $passwd = prompt ("Password:") ;
 
-    $request->authorization_basic(USER_AUTH, PASS_AUTH);
+unless ( (defined $user) and (defined $passwd))
+    {
+	 die "[$local_filename" . ":" . __LINE__ . "]Failed user $user passwd $passwd\n"
+    }
+
+
+INFO "[$local_filename" . ":" . __LINE__ . "]user $user passwd $passwd\n" ;
+
+
+sub basic_auth($$)
+{
+my ($request, $trace) = @_;
+    
+    #    $request->authorization_basic(USER_AUTH, PASS_AUTH);
+   	
+    $request->authorization_basic($user, $passwd);    
     $ua->request($request);
 }
 
