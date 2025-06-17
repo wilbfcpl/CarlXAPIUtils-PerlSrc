@@ -7,6 +7,8 @@
 # -g Logging
 # -x Hold Available True, otherwise False.
 # filename.csv hasPatron barcode, borrower name, borrower type,and email address
+# filename.csv format needs to have iso-latin-1-dos  or ISO-8859-1
+#
 # Input file filename.csv should only have existing Patron Records
 #$patronid,$name,$bty,$email
 # Note that Allow Email needs an email address in the patron record to "stick."
@@ -37,7 +39,7 @@ use Log::Log4perl qw(:easy);
 use IO::Prompt::Tiny qw/prompt/;
 
 #TRACE,DEBUG,INFO,WARN,ERROR,FATAL
-Log::Log4perl->easy_init($TRACE);
+Log::Log4perl->easy_init($WARN);
 # Reduce number of magic values where possible
 use constant SEARCHTYPE_PATRONID => 'Patron ID';
 use constant SEND_HOLD_AVAILABLE_TRUE => 'true' ;
@@ -61,8 +63,8 @@ my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
-#See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPInew.wsdl';
+#See CPAN, web pages XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
+my $wsdlfile = 'PatronAPI.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -79,8 +81,6 @@ unless ( defined $call1 )
 
 
 my ($patronid,$name,$bty,$email) ;
-
-my %PatronRequest;
 my %PatronUpdateValues;
 my %PatronUpdateRequest;
 
@@ -94,7 +94,7 @@ my %PatronUpdateRequest;
         Patron => \%PatronUpdateValues,
         Modifiers=> {
         DebugMode=>1,
-        ReportMode=>1,}
+        ReportMode=>1}
        );
 
  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
