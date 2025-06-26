@@ -64,7 +64,7 @@ my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See CPAN, web pages XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPI.wsdl';
+my $wsdlfile = 'PatronAPItest.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
