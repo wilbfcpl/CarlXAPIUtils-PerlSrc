@@ -12,6 +12,20 @@ For example to set the hold available flag true for patron ids in the file aftan
 Manifest of Perl Scripts.
 
 SettleFinesAndFees
-Accepts an input file of the Patron ID, Item Id starting with #177
+Accepts an input file of the Patron ID, Item Id starting with #177. Needs and prompts for CarlXAPI password.
+
 PATRONID,HASH177,FINEAMOUNT,FINEDATE,ITEM,NAME,STATUS,BTYCODE,EDITDATE,ACTDATE
+
+patronAllowEmailMCE.pl
+Allows patron account to accept email notices. Accepts input file of PatronIDs.
+
+
+AddNoteMCE.pl
+Add note to patron account. Accepts input file of PatronIDs
+
+DeleteNoteMCE.pl
+Delete patron note identified by noteID. Accepts input file of NoteIDs
+
+UpdateItemMCE.pl
+Updates item records with new Call Number. Accepts input file of ItemIDs and the new Call Number value.
 
