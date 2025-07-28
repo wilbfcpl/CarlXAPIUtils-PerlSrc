@@ -94,7 +94,8 @@ unless ( defined $call1 )
 { die "[$local_filename" . ":" . __LINE__ . "] SOAP/WSDL Error $wsdl $call1 \n" ;
 }
 
-my ($patronid, $noteid, $name ,$btype, $notedate, $notetype,  $branch,$actdate, $lastbranch, $alias);
+#my ($patronid, $noteid, $name ,$btype, $notedate, $notetype,  $branch,$actdate, $lastbranch, $alias);
+my $patronid;
 
 my %AddNote;
 my %AddNoteRequest;
