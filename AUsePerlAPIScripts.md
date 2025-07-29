@@ -1,7 +1,7 @@
 # This file
 https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md
 
-# One time (ideally) Setup of the ActiveState State Tool API Perl Environment.
+# One time Setup of the ActiveState State Tool Perl Environment.
 
 ## Download & Install Runtime
 
@@ -21,9 +21,12 @@ https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
 
 ## Change Directory to Run the environment setup script. It will create a directory named carlxapi for the perl files.
 
+
 `cd $HOME/apiprojects`
 
+
 `.\carlxapienv.ps1`
+
 
 ## environment setup script file
 https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
@@ -34,7 +37,9 @@ Change to the Project Directory
 `cd $HOME/apiprojects/carlxapi`
 
 ## Run a smoke test to get the Perl version and check syntax of an API script
+
 `perl -v`
+
 `perl -c AddNoteGrad.pl`
 
 ## CarlX API Perl script file AddNoteGrad.pl
