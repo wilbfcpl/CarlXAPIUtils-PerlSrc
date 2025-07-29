@@ -1,41 +1,48 @@
 
-Download & Install Runtime
+# Setup of the ActiveState State Tool API Perl Environment.
+
+## Download & Install Runtime
 
 https://state-tool.s3.amazonaws.com/remote-installer/release/windows-amd64/state-remote-installer.exe
 
-Open a PowerShell Window and allow execution of Scripts
+## Open a PowerShell Window and allow execution of Scripts
 
 `set-executionpolicy bypass`
 
-Download Powershell Perl environment setup Script
+## Download Powershell Perl environment setup Script
 
 https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
 
-Copy Environment Setup Script to Your Project Directory, e.g.
+## Copy Environment Setup Script to Your Project Directory, e.g.
 
 `cp $HOME/downloads/carlxapienv.ps1 $HOME/apiprojects`
 
-Change Directory to Run the environment setup script
+## Change Directory to Run the environment setup script
 
 `cd $HOME/apiprojects`
 
 `./carlxapienv.ps1`
 
+# Running API commands after completion of one-time setup. 
+Command Format to run API script. Done for any run of the script.
 
-Running a script using an input CSV file
+## Run a script using an input CSV file
 
 `perl AddNoteGrad.pl -g wilAddNote.csv`
 
 
-wilAddNote.csv has a single  PatronID but it could have more, one PatronID per line.
+## Input CSV file example 
+
+wilAddNote.csv 
+has a single PatronID but it could have multiple, one PatronID per line.
 
 11982021684457
 
-Scripts to use
-AddNoteGrad.pl 
+# Scripts to use
+## AddNoteGrad.pl 
 adds General Note to Graduated Student patron account. Typically done after FCPS identifies graduated students in June or July.
 
-patronAllowEMailMCE.pl 
+## patronAllowEMailMCE.pl 
 Allows patron account to receive email
 
 patronSendHoldAvailable 
