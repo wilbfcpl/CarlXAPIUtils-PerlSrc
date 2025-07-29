@@ -1,3 +1,5 @@
+# This file
+https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md
 
 # One time (ideally) Setup of the ActiveState State Tool API Perl Environment.
 
@@ -5,7 +7,7 @@
 
 https://state-tool.s3.amazonaws.com/remote-installer/release/windows-amd64/state-remote-installer.exe
 
-## Open a PowerShell Window and allow execution of Scripts
+## Open a PowerShell Window and temporarily allow execution of remote Scripts in this process
 
 `set-executionpolicy bypass -Scope Process`
 
@@ -21,7 +23,10 @@ https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
 
 `cd $HOME/apiprojects`
 
-`./carlxapienv.ps1`
+`.\carlxapienv.ps1`
+
+## environment setup script file
+https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
 
 ## Confirm that perl is installed and running.
 Open a New PowerShell Session.
@@ -31,6 +36,9 @@ Change to the Project Directory
 ## Run a smoke test to get the Perl version and check syntax of an API script
 `perl -v`
 `perl -c AddNoteGrad.pl`
+
+## CarlX API Perl script file AddNoteGrad.pl
+https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AddNoteGrad.pl
 
 # Running API commands after completion of one-time setup. 
 Command Format to run API script. Done for any run of the script.
