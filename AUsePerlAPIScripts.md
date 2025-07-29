@@ -7,7 +7,7 @@ https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts
 
 https://state-tool.s3.amazonaws.com/remote-installer/release/windows-amd64/state-remote-installer.exe
 
-## Open a PowerShell Window and temporarily allow execution of remote Scripts in this process
+## Open a PowerShell Window and temporarily allow execution of remote Scripts
 
 `set-executionpolicy bypass -Scope Process`
 
