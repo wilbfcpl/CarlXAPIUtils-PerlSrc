@@ -1,5 +1,5 @@
 
-# Setup of the ActiveState State Tool API Perl Environment.
+# One time (ideally) Setup of the ActiveState State Tool API Perl Environment.
 
 ## Download & Install Runtime
 
@@ -7,7 +7,7 @@ https://state-tool.s3.amazonaws.com/remote-installer/release/windows-amd64/state
 
 ## Open a PowerShell Window and allow execution of Scripts
 
-`set-executionpolicy bypass`
+`set-executionpolicy bypass -Scope Process`
 
 ## Download Powershell Perl environment setup Script
 
@@ -17,11 +17,20 @@ https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
 
 `cp $HOME/downloads/carlxapienv.ps1 $HOME/apiprojects`
 
-## Change Directory to Run the environment setup script
+## Change Directory to Run the environment setup script. It will create a directory named carlxapi for the perl files.
 
 `cd $HOME/apiprojects`
 
 `./carlxapienv.ps1`
+
+## Confirm that perl is installed and running.
+Open a New PowerShell Session.
+Change to the Project Directory
+`cd $HOME/apiprojects/carlxapi`
+
+## Run a smoke test to get the Perl version and check syntax of an API script
+`perl -v`
+`perl -c AddNoteGrad.pl`
 
 # Running API commands after completion of one-time setup. 
 Command Format to run API script. Done for any run of the script.
