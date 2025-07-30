@@ -2,7 +2,7 @@
 ## After one-time installation, a CarlX library staff person will run a CarlX API perl script with an input csv file. This example adds a standard note to every line in file wilAddNote.csv having a patronID barcode in the first column. 
 `perl AddNoteGrad.pl -g wilAddNote.csv`
 
-# [Active State State Tool Background] https://docs.activestate.com/platform/state/
+# [Active State State Tool Background](https://docs.activestate.com/platform/state/)
 
 # This file
 https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md
