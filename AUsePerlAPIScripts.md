@@ -1,4 +1,6 @@
-# Setup CarlX API scripting PowerShell environment built on ActiveState State Tool. State tool can maintain the libraries integrity for security and validity. This environment uses ActiveState Perl but can also use ActiveState Python. This environment uses PowerShell but can also use Linux sh or bash shell. Objective remains to make CarlXAPI features available to CarlX libraries capable of running command line scripts.
+# Setup CarlX API scripting PowerShell environment built on ActiveState State Tool. State tool can maintain the libraries integrity for security and validity - unique among scripting environments. This environment uses ActiveState Perl but can also use ActiveState Python. This environment uses PowerShell but can also use Linux sh or bash shell. Objective remains to make CarlXAPI features available to CarlX library staff capable of running command line scripts in PowerShell or Linux.
+## After one-time installation, a CarlX library staff person will run a CarlX API perl script with an input csv file 
+`perl AddNoteGrad.pl -g wilAddNote.csv`
 
 # This file
 https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md
