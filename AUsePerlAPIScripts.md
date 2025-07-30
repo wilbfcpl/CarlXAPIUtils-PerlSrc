@@ -4,22 +4,17 @@
 
 # [Active State State Tool Background](https://docs.activestate.com/platform/state/)
 
-# This file
-https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md
+# [This file](https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md)
 
 # One time Setup of the ActiveState State Tool Perl Environment.
 
-## Download & Install Runtime
-
-https://state-tool.s3.amazonaws.com/remote-installer/release/windows-amd64/state-remote-installer.exe
+## [Download & Install Runtime](https://state-tool.s3.amazonaws.com/remote-installer/release/windows-amd64/state-remote-installer.exe)
 
 ## Open a PowerShell Window and temporarily allow execution of remote Scripts
 
 `set-executionpolicy bypass -Scope Process`
 
-## Download Powershell Perl environment setup Script
-
-https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
+## [Download Powershell Perl environment setup Script](https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1)
 
 ## Copy Environment Setup Script to Your Project Directory, e.g.
 
@@ -34,8 +29,7 @@ https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
 `.\carlxapienv.ps1`
 
 
-## environment setup script file
-https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1
+## [Environment setup script file](https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/carlxapienv.ps1)
 
 ## Confirm that perl is installed and running.
 Open a New PowerShell Session.
@@ -48,8 +42,7 @@ Change to the Project Directory
 
 `perl -c AddNoteGrad.pl`
 
-## CarlX API Perl script file AddNoteGrad.pl
-https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AddNoteGrad.pl
+## [CarlX API Perl script file AddNoteGrad.pl](https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AddNoteGrad.pl)
 
 # Running API commands after completion of one-time setup. 
 Command Format to run API script. Done for any run of the script.
@@ -66,8 +59,7 @@ has a single PatronID but it could have multiple, one PatronID per line.
 
 11982021684457
 
-## Carl Connect view of the above PatronID.
-https://fcpl.carlconnect.com/Circulation/UserServices/userInformation.html?Barcode=11982021684457&keyword=&searchbutton=Search&FromSearch=true
+## [Carl Connect view of the above PatronID](https://fcpl.carlconnect.com/Circulation/UserServices/userInformation.html?Barcode=11982021684457&keyword=&searchbutton=Search&FromSearch=true)
 
 
 # Scripts to use
