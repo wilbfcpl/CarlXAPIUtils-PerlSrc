@@ -1,3 +1,5 @@
+# Setup CarlX API scripting PowerShell environment built on ActiveState State Tool. State tool can maintain the libraries integrity for security and validity. This environment uses ActiveState Perl but can also use ActiveState Python. This environment uses PowerShell but can also use Linux sh or bash shell. Objective remains to make CarlXAPI features available to CarlX libraries capable of running command line scripts.
+
 # This file
 https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AUsePerlAPIScripts.md
 
@@ -48,7 +50,7 @@ https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/blob/master/AddNoteGrad.pl
 # Running API commands after completion of one-time setup. 
 Command Format to run API script. Done for any run of the script.
 
-## Run a script using an input CSV file
+## Run a script using an input CSV file. Use your own CSV with parameters like PatronID, ItemID, Call Number, and NoteID. Should add a Standard Note to the Patron Accounts in the file, in this case a single patron.
 
 `perl AddNoteGrad.pl -g wilAddNote.csv`
 
@@ -59,6 +61,10 @@ wilAddNote.csv
 has a single PatronID but it could have multiple, one PatronID per line.
 
 11982021684457
+
+## Carl Connect view of the above PatronID.
+https://fcpl.carlconnect.com/Circulation/UserServices/userInformation.html?Barcode=11982021684457&keyword=&searchbutton=Search&FromSearch=true
+
 
 # Scripts to use
 ## AddNoteGrad.pl 
