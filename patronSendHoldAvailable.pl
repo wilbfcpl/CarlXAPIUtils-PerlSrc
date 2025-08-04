@@ -21,6 +21,11 @@
 # An SQL Query to select patrons from an imported table PATRONSDONOTSENDEMAIL
 #select sample.name, sample.email, patron.emailnotices from carlreports.PATRONSDONOTSENDEMAIL sample, carlreports.PATRON_V2 patron
 #where sample.patronid = patron.patronid order by sample.name;
+#
+# PatronAPI
+# http://fcplapp.fcpl.org:8081/APIDocs/service_endpoints_PatronServiceImplService.html#service_endpoints_PatronServiceImplService_method_updatePatron
+#
+
 
 use strict;
 use warnings FATAL => 'all';
@@ -64,7 +69,7 @@ my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See CPAN, web pages XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPItest.wsdl';
+my $wsdlfile = 'PatronAPI.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -93,8 +98,8 @@ my %PatronUpdateRequest;
         SearchType => SEARCHTYPE_PATRONID,
         Patron => \%PatronUpdateValues,
         Modifiers=> {
-        DebugMode=>1,
-        ReportMode=>1}
+        DebugMode=>0,
+        ReportMode=>0}
        );
 
  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
