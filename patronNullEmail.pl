@@ -84,7 +84,7 @@ unless ( defined $call1 )
 }
 
 
-my ($patronid,$name,$bty,$email) ;
+my ($patronid) ;
 
 my %PatronRequest;
 my %PatronUpdateValues;

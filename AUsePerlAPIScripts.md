@@ -62,6 +62,9 @@ has a single PatronID but it could have multiple, one PatronID per line.
 
 ## [Carl Connect view of the above PatronID](https://fcpl.carlconnect.com/Circulation/UserServices/userInformation.html?Barcode=11982021684457&keyword=&searchbutton=Search&FromSearch=true)
 
+# Uninstall steps PowerShell
+`state clean uninstall -a`
+`rmdir CarlXAPI`
 
 # Scripts to use
 ## AddNoteGrad.pl 

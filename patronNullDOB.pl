@@ -44,12 +44,14 @@ use IO::Prompt::Tiny qw/prompt/;
 Log::Log4perl->easy_init($TRACE);
 # Reduce number of magic values where possible
 use constant SEARCHTYPE_PATRONID => 'Patron ID';
-#use constant NULL_DOB =>  'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"'  ;
+
 #use constant NULL_DOB => 'nil'  ;
-#use constant NULL_DOB => undef ;
 #use constant NULL_DOB => '1971-01-01'  ;
-#use constant NULL_DOB => ""  ;
-use constant NULL_DOB => '-'  ;
+#use constant NULL_DOB => '-'  ;
+#use constant NULL_DOB => undef ;
+#use constant NULL_DOB =>  'xsi:nil="true"'  ;
+#use constant NULL_DOB =>  "\x07F" ;
+use constant NULL_DOB =>  "00/00/0000" ;
 
 #Command line input variable handling
 our ($opt_g,$opt_r,$opt_x);
@@ -86,7 +88,7 @@ unless ( defined $call1 )
 }
 
 
-my ($patronid,$name,$bty,$email) ;
+my ($patronid) ;
 
 my %PatronRequest;
 my %PatronUpdateValues;
