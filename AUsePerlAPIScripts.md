@@ -64,6 +64,7 @@ has a single PatronID but it could have multiple, one PatronID per line.
 
 # Uninstall steps PowerShell
 `state clean uninstall -a`
+
 `rmdir CarlXAPI`
 
 # Scripts to use
