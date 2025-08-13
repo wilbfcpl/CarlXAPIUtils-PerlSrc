@@ -1,7 +1,9 @@
 # Overview
-## Setup CarlX API scripting Windows PowerShell (or Linux bash) environment built on [ActiveState Platform State Tool](https://docs.activestate.com/platform/state/). Platform and state tool can maintain the security and validity of the scripting tools - a unique service feature among scripting environments. This environment uses ActiveState Perl but can in theory use ActiveState Python as well. Simlarly this environment uses PowerShell but can also use Windows DOS shell, Linux sh ,or bash shell. A key objective: make CarlXAPI features available to CarlX library staff users who can run command line scripts in Windows or Linux.
+## Setup CarlX API scripting Windows PowerShell (or Linux bash) environment built on [ActiveState Platform State Tool](https://docs.activestate.com/platform/state/). Platform and state tool can maintain the security and validity of the scripting tools - a unique service feature among scripting environments. This environment uses ActiveState Perl and in theory use ActiveState Python as well. Simlarly this environment uses PowerShell and can also use Windows DOS shell, Linux sh ,or bash shell. A key objective: make CarlXAPI features available to CarlX library staff users who can run command line operations in Windows or Linux.
 
-[CarlXAPI Perl Source  Github] (https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/tree/master)
+
+
+[CarlXAPI Perl Source Github](https://github.com/wilbfcpl/CarlXAPIUtils-PerlSrc/tree/master)
 
 [ActiveState Platform](https://www.activestate.com/platform/)
 
