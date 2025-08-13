@@ -1,5 +1,8 @@
 # Overview
 ## Setup CarlX API scripting PowerShell environment built on ActiveState State Tool. State tool can maintain the libraries integrity for security and validity - unique among scripting environments. This environment uses ActiveState Perl but can also use ActiveState Python. This environment uses PowerShell but can also use Linux sh or bash shell. Objective remains to make CarlXAPI features available to CarlX library staff capable of running command line scripts in PowerShell or Linux.
+[ActiveState Platform](https://www.activestate.com/platform/)
+[ActiveState Perl](https://www.activestate.com/platform/supported-languages/perl/)
+
 ## After one-time installation, a CarlX library staff person will run a CarlX API perl script with an input csv file. This example adds a standard note to every line in file wilAddNote.csv having a patronID barcode in the first column. 
 `perl AddNoteGrad.pl -g wilAddNote.csv`
 ## Note that the CSV file coding must use iso-latin-1-dos / ISO 8859 1  or the perl script will fail
