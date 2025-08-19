@@ -9,9 +9,7 @@
 
 [ActiveState Perl](https://www.activestate.com/platform/supported-languages/perl/)
 
-## Note that under Windows the ActiveState Platform State Tool can conflict with tools like mingw, cygwin, and Strawberry Perl. 
-## After one-time installation, a CarlX library staff person will run a CarlX API perl script with an input csv file. 
-## This example adds a standard note to every patron account with patronID present in the first column of file wilAddNote.csv. 
+## Note that under Windows the ActiveState Platform State Tool can conflict with tools like mingw, cygwin, and Strawberry Perl. After one-time installation, a CarlX library staff person will run a CarlX API perl script with an input csv file. This example adds a standard note to every patron account with patronID present in the first column of file wilAddNote.csv. 
 `perl AddNoteGrad.pl -g wilAddNote.csv`
 ## Note that the CSV file coding must use iso-latin-1-dos / ISO 8859 1  or the perl script will fail
 # [Active State State Tool Background](https://docs.activestate.com/platform/state/)
