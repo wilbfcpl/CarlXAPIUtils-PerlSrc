@@ -49,6 +49,11 @@ use constant EMAIL_NOTICE_BOUNCED_EMAIL => 'bounced email' ;
 use constant EMAIL_NOTICE_OPTOUT => 'opted out' ;
 use constant EMAIL_NOTICE_NO_EMAIL => 'do not send email' ;
 
+use constant BOUNCED_EMAIL_NOTE_TYPE => 900;
+use constant INFO_NOTE_TYPE => 501;
+
+use constant BOUNCED_EMAIL_SOFT_NOTE_TEXT => "Patron Point Soft Email Bounce";
+use constant BOUNCED_EMAIL_HARD_NOTE_TEXT => "Patron Point Hard Email Bounce";
 
 #Command line input variable handling
 our ($opt_g,$opt_r,$opt_x);
@@ -66,10 +71,10 @@ $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
 my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
-INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
+#INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPInew.wsdl';
+my $wsdlfile = 'PatronAPI.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -79,24 +84,20 @@ unless (defined $wsdl)
 }
 
 my $call1 = $wsdl->compileClient('UpdatePatron');
+my $call2 = $wsdl->compileClient('AddPatronNote');
 
 unless ( defined $call1 )
 { die "[$local_filename" . ":" . __LINE__ . "] SOAP/WSDL Error $wsdl $call1\n" ;
 }
 
 
-my ($patronid,$bouncetype,$name,$bty,$email) ;
+my ($patronid,$bouncetype) ;
 
 my %PatronRequest;
-my %PatronUpdateValues;
+my %PatronUpdateValues = ( PatronStatusCode => 'S' );
 my %PatronUpdateRequest;
+my %AddNote =( NoteType => BOUNCED_EMAIL_NOTE_TYPE , NoteText => BOUNCED_EMAIL_SOFT_NOTE_TEXT);
 
-%PatronUpdateValues =
-    (
-     #     EmailNotices =>  defined($opt_x) ? EMAIL_NOTICE_NO_EMAIL:EMAIL_NOTICE_SEND_EMAIL
-          EmailNotices =>  ($bouncetype eq BOUNCETYPE_SOFT_BOUNCE )? EMAIL_NOTICE_BOUNCED_EMAIL:EMAIL_NOTICE_OPTOUT,
-      PatronStatusCode => 'S'
-    );
 
 %PatronUpdateRequest =
        (
@@ -104,10 +105,22 @@ my %PatronUpdateRequest;
         Patron => \%PatronUpdateValues,
         Modifiers=> {
         DebugMode=>1,
-        ReportMode=>1,}
+        ReportMode=>1}
        );
 
- ERROR "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
+# INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
+
+my %AddNoteRequest;
+
+ 
+    %AddNoteRequest =
+      (
+       Note => \%AddNote,
+       Modifiers => {
+		     DebugMode => 1,
+		     ReportMode => 1
+		    }
+      ) ;
 
 
 # Use MCE::Loop to process lines in parallel
@@ -120,26 +133,60 @@ my %PatronUpdateRequest;
     }
        );
 
+my $softOrHardBounce=BOUNCETYPE_SOFT_BOUNCE;
+
 # Loop until the end of the input file with the first line an assumed header.
 
 mce_loop_f {
 
   chomp;
-  INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+  # INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
 
   # Expect only the patronid in the simplest input file.
-    #        ($patronid, $name,$bty,$email)  = split(/,/);
+  #        ($patronid, $name,$bty,$email)  = split(/,/);
+
+  $softOrHardBounce=BOUNCETYPE_SOFT_BOUNCE;
+  
   ($patronid,$bouncetype)  = split(/,/);
 
+  my @patterns = map { qr/\b$_\b/i } qw( spam preblocked );
+  
+   foreach my $pattern ( @patterns ) {
+       if( $bouncetype =~ m/$pattern/ ) {
+	   $softOrHardBounce=BOUNCETYPE_HARD_BOUNCE;
+	   last ;
+       }
+     
+   }
+  INFO "[$local_filename" . ":" . __LINE__ . "]bouncetype $bouncetype";	    	    
+  $PatronUpdateValues{EmailNotices} = ($softOrHardBounce eq BOUNCETYPE_SOFT_BOUNCE )? EMAIL_NOTICE_BOUNCED_EMAIL:EMAIL_NOTICE_OPTOUT;  
+
+  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateValues " . Dumper(\%PatronUpdateValues) ;
+  
   $PatronUpdateRequest{SearchID}= $patronid;
 
-  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
+ INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
 
   my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
 
   if ($trace1->errors) {
+      $trace1->printErrors;
+
+  }
+  
+# Add Patron Note
+  %AddNote =
+            ( NoteType => BOUNCED_EMAIL_NOTE_TYPE,
+	      NoteText => ($softOrHardBounce  eq BOUNCETYPE_SOFT_BOUNCE ) ? BOUNCED_EMAIL_SOFT_NOTE_TEXT:BOUNCED_EMAIL_HARD_NOTE_TEXT,
+	      PatronID => $patronid
+	   ) ;
+
+  
+  my ($result2,$trace2)=$call2->(%AddNoteRequest);
+  if ($trace1->errors) {
     $trace1->printErrors;
   }
+  
 } $PATRON_FILE ;
 
 MCE::Loop::finish;
