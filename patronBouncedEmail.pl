@@ -96,7 +96,7 @@ my ($patronid,$bouncetype) ;
 my %PatronRequest;
 my %PatronUpdateValues = ( PatronStatusCode => 'S' );
 my %PatronUpdateRequest;
-my %AddNote =( NoteType => BOUNCED_EMAIL_NOTE_TYPE , NoteText => BOUNCED_EMAIL_SOFT_NOTE_TEXT);
+my %AddNote =( NoteType => BOUNCED_EMAIL_NOTE_TYPE , NoteText => BOUNCED_EMAIL_HARD_NOTE_TEXT);
 
 
 %PatronUpdateRequest =
@@ -149,6 +149,8 @@ mce_loop_f {
   
   ($patronid,$bouncetype)  = split(/,/);
 
+  next if $patronid !~/\d{5,}/;
+
   my @patterns = map { qr/\b$_\b/i } qw( spam preblocked );
   
    foreach my $pattern ( @patterns ) {
@@ -174,17 +176,14 @@ mce_loop_f {
 
   }
   
-# Add Patron Note
-  %AddNote =
-            ( NoteType => BOUNCED_EMAIL_NOTE_TYPE,
-	      NoteText => ($softOrHardBounce  eq BOUNCETYPE_SOFT_BOUNCE ) ? BOUNCED_EMAIL_SOFT_NOTE_TEXT:BOUNCED_EMAIL_HARD_NOTE_TEXT,
-	      PatronID => $patronid
-	   ) ;
+  # Add Patron Note except for Soft Bounce 2
 
-  
-  my ($result2,$trace2)=$call2->(%AddNoteRequest);
-  if ($trace1->errors) {
-    $trace1->printErrors;
+  if ( $softOrHardBounce eq BOUNCETYPE_HARD_BOUNCE){
+      $AddNote{PatronID} = $patronid;
+      my ($result2,$trace2)=$call2->(%AddNoteRequest);
+      if ($trace1->errors) {
+	  $trace1->printErrors;
+      }
   }
   
 } $PATRON_FILE ;
