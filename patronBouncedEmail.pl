@@ -2,23 +2,31 @@
 # Created: Aug 26, 2025
 # Version: 0.01
 #
-# Usage: perl [-d] [-r ] [-x] [-g] patronAllowEmailMCE.pl filename.csv
+# Usage: perl [-d] [-r ] [-x] [-g] patronBouncedEmail.pl filename.csv
 # -d Debug/verbose 
 # -g Logging
 # -x don't send email
-# filename.csv hasPatron barcode, borrower name, borrower type,and email address
+# filename.csv has Patron barcode, Patron Point Bounce Result
 # Input file filename.csv should only have existing Patron Records
-#$patronid,$name,$bty,$email
+#$patronid,$PPBouncedResult
 # Note that Allow Email needs an email address in the patron record to "stick."
 #Debug mode- a lot more SOAP messages.
-# MCE Loop has error if first line of in file has column label headings
 # Uses local copy of CarlX WSDL file PatronAPI.wsdl for PatronAPI requests
 #
 # SOAPUI tool can provide a sandbox for the WSDL file and PatronAPI requests.
 # Note that API call and response return appear to take one second in real time.
-# An SQL Query to select patrons from an imported table PATRONSDONOTSENDEMAIL
-#select sample.name, sample.email, patron.emailnotices from carlreports.PATRONSDONOTSENDEMAIL sample, carlreports.PATRON_V2 patron
-#where sample.patronid = patron.patronid order by sample.name;
+# An SQL Query to select patrons from an imported table PPBOUNCED
+#select distinct patron.patronid, bounce."DNC Reason",upper(patron.email),upper(bounce.email) as bounceemail,
+#        case emailnotices when 0 then 'No Email Notices'
+#                          when 1 then 'Email Notices'
+#                          when 2 then 'bounced email'
+#                          when 3 then 'opt out'
+#                          else 'Unknown' end as emailnotices,
+#        bty.btycode, name from patron_v2 patron
+# inner join bty_v2 bty on (patron.bty = bty.btynumber)
+
+# inner join ppbounced bounce
+#     on substr(upper(patron.email),1, 10) = substr(upper(bounce.email),1,10)  ;
 
 use strict;
 use warnings FATAL => 'all';
