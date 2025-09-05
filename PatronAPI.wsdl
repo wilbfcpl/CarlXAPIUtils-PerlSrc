@@ -1116,7 +1116,7 @@
   </wsdl:binding>
   <wsdl:service name="CarlXAPIService" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
     <wsdl:port binding="sch0:CarlXAPISoap11" name="CarlXAPISoap11" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
-      <soap:address location="http://fcplapp.fcpl.org:8081/CarlXAPI/CarlXAPI/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+      <soap:address location="http://fcplapp.fcpl.org:8080/CarlXAPI/CarlXAPI/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
     </wsdl:port>
   </wsdl:service>
 </wsdl:definitions>

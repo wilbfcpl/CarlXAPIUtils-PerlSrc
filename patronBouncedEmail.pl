@@ -83,6 +83,7 @@ my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 
 #See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 my $wsdlfile = 'PatronAPInew.wsdl';
+#my $wsdlfile = 'http://fcplapp.fcpl.org:8081/CarlXAPI/PatronAPI.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -99,7 +100,8 @@ unless ( defined $call1 )
 }
 
 
-my ($patronid,$birthdate,$bouncetype) ;
+#my ($patronid,$birthdate,$bouncetype) ;
+my ($patronid,$bouncetype) ;
 
 my %PatronRequest;
 my %PatronUpdateValues = ( PatronStatusCode => 'S' );
@@ -155,7 +157,8 @@ mce_loop_f {
 
   $softOrHardBounce=BOUNCETYPE_SOFT_BOUNCE;
   
-  ($patronid,$birthdate,$bouncetype)  = split(/,/);
+#  ($patronid,$birthdate,$bouncetype)  = split(/,/);
+    ($patronid,$bouncetype)  = split(/,/);
 
   next if $patronid !~/\d{5,}/;
 
@@ -170,9 +173,7 @@ mce_loop_f {
    }
   INFO "[$local_filename" . ":" . __LINE__ . "]bouncetype $bouncetype";	    	    
 
-  %PatronUpdateValues = ( EmailNotices => ($softOrHardBounce eq BOUNCETYPE_SOFT_BOUNCE )? EMAIL_NOTICE_BOUNCED_EMAIL:EMAIL_NOTICE_OPTOUT,
-			BirthDate => $birthdate
-			) ; 
+  $PatronUpdateValues{EmailNotices} = ($softOrHardBounce eq BOUNCETYPE_SOFT_BOUNCE )? EMAIL_NOTICE_BOUNCED_EMAIL:EMAIL_NOTICE_OPTOUT ;
 
   INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateValues " . Dumper(\%PatronUpdateValues) ;
   
