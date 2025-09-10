@@ -52,10 +52,13 @@ use constant SEARCHTYPE_PATRONID => 'Patron ID';
 use constant BOUNCETYPE_SOFT_BOUNCE => 'S';
 use constant BOUNCETYPE_HARD_BOUNCE => 'H';
 
+
+use constant EMAIL_ADDRESS_TEST => 'wil.blake@fcpl.org';
 use constant EMAIL_NOTICE_SEND_EMAIL => 'send email' ;
 use constant EMAIL_NOTICE_BOUNCED_EMAIL => 'bounced email' ;
 use constant EMAIL_NOTICE_OPTOUT => 'opted out' ;
 use constant EMAIL_NOTICE_NO_EMAIL => 'do not send email' ;
+
 
 use constant BOUNCED_EMAIL_NOTE_TYPE => 900;
 use constant INFO_NOTE_TYPE => 501;
@@ -104,7 +107,10 @@ unless ( defined $call1 )
 my ($patronid,$bouncetype) ;
 
 my %PatronRequest;
+
 my %PatronUpdateValues = ( PatronStatusCode => 'S' );
+#my %PatronUpdateValues = ( PatronStatusCode => 'S' , Email => EMAIL_ADDRESS_TEST);
+
 my %PatronUpdateRequest;
 my %AddNote =( NoteType => BOUNCED_EMAIL_NOTE_TYPE , NoteText => BOUNCED_EMAIL_HARD_NOTE_TEXT);
 
