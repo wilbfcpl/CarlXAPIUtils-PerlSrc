@@ -2,15 +2,15 @@
 # Created: June 5, 2025
 # Version: 0.01
 #
-# Usage: perl [-d] [-r ] [-x] [-g] patronAllowEmailMCE.pl filename.csv
-# -d Debug/verbose 
+# Usage: perl  patronAllowEmail.pl [-g] [-x] filename.csv
+#  
 # -g Logging
 # -x don't send email
 # filename.csv hasPatron barcode, borrower name, borrower type,and email address
 # Input file filename.csv should only have existing Patron Records
 #$patronid,$name,$bty,$email
 # Note that Allow Email needs an email address in the patron record to "stick."
-#Debug mode- a lot more SOAP messages.
+# Debug mode- a lot more SOAP messages.
 # MCE Loop has error if first line of in file has column label headings
 # Uses local copy of CarlX WSDL file PatronAPI.wsdl for PatronAPI requests
 #
@@ -42,11 +42,13 @@ Log::Log4perl->easy_init($TRACE);
 use constant SEARCHTYPE_PATRONID => 'Patron ID';
 use constant EMAIL_NOTICE_SEND_EMAIL => 'send email' ;
 use constant EMAIL_NOTICE_NO_EMAIL => 'do not send email' ;
-
+use constant PATRON_MODIFIERS_DEBUG_MODE_ON => 1;
+use constant PATRON_MODIFIERS_REPORT_MODE_ON => 1;
+use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 
 #Command line input variable handling
-our ($opt_g,$opt_r,$opt_x);
-getopts('grx');
+our ($opt_g,$opt_x);
+getopts('gx');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -63,7 +65,7 @@ my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file ar
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPInew.wsdl';
+my $wsdlfile = 'PatronAPI.wsdl';
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -95,8 +97,10 @@ my %PatronUpdateRequest;
         SearchType => SEARCHTYPE_PATRONID,
         Patron => \%PatronUpdateValues,
         Modifiers=> {
-        DebugMode=>1,
-        ReportMode=>1,}
+        DebugMode=>PATRON_MODIFIERS_DEBUG_MODE_ON,
+        ReportMode=>PATRON_MODIFIERS_REPORT_MODE_ON,
+	StaffID=>PATRON_MODIFIERS_STAFFID_WIL
+	}
        );
 
  ERROR "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
@@ -117,7 +121,7 @@ my %PatronUpdateRequest;
 mce_loop_f {
 
   chomp;
-  INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+  INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
   # Expect only the patronid in the simplest input file.
     #        ($patronid, $name,$bty,$email)  = split(/,/);
@@ -128,6 +132,9 @@ mce_loop_f {
   INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
 
   my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
+
+  ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
+  ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
 
   if ($trace1->errors) {
     $trace1->printErrors;

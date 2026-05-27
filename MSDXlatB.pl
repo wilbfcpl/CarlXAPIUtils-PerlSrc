@@ -1,7 +1,7 @@
-#!/s/sirsi/Unicorn/Bin/perl
-# Author:  <wblake@CB95043>
+#!/bin/perl
+# Author:  <wblake@3C5XT#4>
 # Created: Dec 17 2021
-# Version: 0.01
+# Version: 0.5
 # Note that the Git Project Name is PatronLoader while the Komodo Project Name is FCPSStudentData
 #Usage MSDXlat.pl -l -d "2021-12-02" infile >outfile
 # MSD Data expected by this utility
@@ -148,7 +148,9 @@ if (defined $opt_l) {
 	case "Infants"  {$grade = "PK"}
 	case "Toddlers"  {$grade = "PK"}       
 	case "PreK"  {$grade = "PK"}
+	case "Pre-K"  {$grade = "PK"}
 	case "PreSchool"  {$grade = "PK"}
+	case "Pre-S"  {$grade = "PK"}
 	case "PK"  {$grade = "PK"}
 	case  "K"  {$grade = "K"}
 	case  "1"  {$grade = "01"}
