@@ -38,6 +38,7 @@ use IO::Prompt::Tiny qw/prompt/;
 
 #TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 Log::Log4perl->easy_init($TRACE);
+
 # Reduce number of magic values where possible
 use constant SEARCHTYPE_PATRONID => 'Patron ID';
 use constant EMAIL_NOTICE_SEND_EMAIL => 'send email' ;
