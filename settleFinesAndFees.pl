@@ -2,10 +2,10 @@
 # Created: May 25, 2026
 # Version: 0.01
 #
-# Usage: perl  settleFinesAndFees.pl [-g] filename.csv
+# Usage: perl  settleFinesAndFees.pl [-g] [-p] filename.csv
 #  
 # -g Logging
-# -x 
+# -p Production wsdl file and server
 # filename.csv hasPatron barcode, hash177 value, fineamount,finedate,item,name,status,btycode,editdate,actdate
 ##177XXXXX itemid generated after the item goes lost
 # Only the patronid and hashoneseven columns matter but the Input CSV file column order goes:
@@ -49,9 +49,13 @@ use feature 'say';
 use Log::Log4perl qw(:easy);
 use IO::Prompt::Tiny qw/prompt/;
 
+#TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 Log::Log4perl->easy_init($DEBUG);
 
-use constant CARLX_ID_WB0=> 'wb0';
+use constant PATRON_MODIFIERS_DEBUG_MODE_ON => 1;
+use constant PATRON_MODIFIERS_REPORT_MODE_ON => 1;
+use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
+
 
 use constant INSTITUTE_CODE => 1770;
 use constant FCPL_BRANCH=>'HDQ';
@@ -64,8 +68,8 @@ use constant PAY_METHOD=>'Cash';
 use constant PAY_AMOUNT=>23.93;
 use constant OCCUR => 1;
 
-our ($opt_g,$opt_r,$opt_x);
-getopts('gdrx:');
+our ($opt_g,$opt_p);
+getopts('gp');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -73,13 +77,16 @@ my $result ;
 my $trace;
 
 my $local_filename=$0;
+
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
 my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
-my $wsdlfile = 'PatronAPInew.wsdl';
+my $wsdlfile =  ( defined $opt_p ?  'PatronAPI.wsdl' : 'PatronAPInew.wsdl');
+
+INFO "[$local_filename" . ":" . __LINE__ . "]wsdlfile: $wsdlfile";
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -88,7 +95,7 @@ unless (defined $wsdl)
     die "[$local_filename" . ":" . __LINE__ . "]Failed XML::Compile call\n" ;
 }
 
-my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);
+my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);#
 
 my $user = prompt("Username:") ;
 my $passwd = prompt ("Password:") ;
@@ -104,12 +111,22 @@ INFO "[$local_filename" . ":" . __LINE__ . "]user $user passwd $passwd\n" ;
 
 sub basic_auth($$)
 {
-my ($request, $trace) = @_;
+  my ($request, $trace) = @_;
     
-    #    $request->authorization_basic(USER_AUTH, PASS_AUTH);
+#$request->authorization_basic(USER_AUTH, PASS_AUTH);
    	
-    $request->authorization_basic($user, $passwd);    
-    $ua->request($request);
+  $request->authorization_basic($user, $passwd);
+  my $res=$ua->request($request);
+
+  # Handle the response
+  if ($res->is_success) {
+    INFO  "[$local_filename" . ":" . __LINE__ . "]Auth Success. status: $res->status_line \n";
+    INFO  "[$local_filename" . ":" . __LINE__ . "]Auth Success. content: $res->decoded_content \n";
+  } else {
+      INFO "[$local_filename" . ":" . __LINE__ . "]Auth Fail. status: $res->status_line \n";
+     die  "[$local_filename" . ":" . __LINE__ . "]Auth fail. content: $res->decoded_tontent \n";
+}
+
 }
 
 INFO "[$local_filename" . ":" . __LINE__ . "] compileClient";
@@ -120,14 +137,7 @@ unless ( defined $call1 )
 { die "[$local_filename" . ":" . __LINE__ . "] SOAP/WSDL Error $wsdl $call1 \n" ;
 }
 
-    
-my ($patronid, $hashoneseven, $amount, $finedate,$itemid, $name, $status,$btycode,$street1,$notes,$regdate,$editdate,$actdate);
 
-# # Read the header row
-# $_ = <>;
-# chomp;
-# INFO "[$local_filename" . ":" . __LINE__ . "]Read Header Row Record $_";
-# ;
 
 my %ResponseStatus;
 my %SettleFinesAndFeesRequest;
@@ -153,9 +163,11 @@ my %FineOrFee;
   SearchType=>'Patron ID',
        FineOrFee=> \%FineOrFee,
        Modifiers => {
-       StaffID =>CARLX_ID_WB0,
-       EnvBranch =>FCPL_BRANCH ,
-      }
+       DebugMode=>PATRON_MODIFIERS_DEBUG_MODE_ON,
+       ReportMode=>PATRON_MODIFIERS_REPORT_MODE_ON,
+       StaffID=>PATRON_MODIFIERS_STAFFID_WIL,
+       EnvBranch =>FCPL_BRANCH
+		    }
       ) ;
 
 # Use MCE::Loop to process lines in parallel
@@ -176,7 +188,7 @@ mce_loop_f {
     chomp;
     
     INFO "[$local_filename" . ":" . __LINE__ . "]Record $_ ";
-    my ($patronid, $hashoneseven, $amount, $finedate, $itemid, $name, $status, $btycode, $editdate, $actdate)  = split(/,/);
+    my ($patronid, $hashoneseven, $amount, $finedate, $name,$regdate, $actdate)  = split(/,/);
 
     $FineOrFee{ItemID}= $hashoneseven;
     $FineOrFee{Amount}= $amount;
@@ -186,8 +198,11 @@ mce_loop_f {
 
     INFO "[$local_filename" . ":" . __LINE__ . "]Record $_" . " Call Completed";
 
+    ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
+    ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
+    
     if ($trace1->errors) {
-        INFO "[$local_filename" . ":" . __LINE__ . "]Trace print " && $trace1->printErrors;
+       INFO $trace1->printErrors;
     }
     
 }  $PATRON_FILE ;
