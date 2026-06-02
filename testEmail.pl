@@ -62,9 +62,9 @@ my $trace;
 my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
-my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
+# my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
-INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
+# INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 
@@ -117,34 +117,37 @@ my %PatronUpdateRequest;
     max_workers => 8,
     chunk_size => 1,
     user_error => sub {
-    my ($mce, $chunk_id, $error) = @_;
+	my ($mce, $chunk_id, $error) = @_;
     ERROR "[$local_filename" . ":" . __LINE__ . "] Error in worker $chunk_id: $error";
     }
        );
 
 # Loop until the end of the input file with the first line an assumed header.
 
-mce_loop_f {
+mce_loop {
+    my ($mce, $chunk_ref, $chunk_id) = @_;
 
-  chomp;
-  INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
+    foreach my $line (@$chunk_ref) {
+        chomp $line;
+        next if $line eq '';  # Skip empty lines
+	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
-  # Expect only the patronid in the simplest input file.
-    #        ($patronid, $name,$bty,$email)  = split(/,/);
-  ($patronid)  = split(/,/);
+	($patronid)  = split(/,/,$line);
 
-  $PatronUpdateRequest{SearchID}= $patronid;
+	$PatronUpdateRequest{SearchID}= $patronid;
 
-  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
+	INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
 
-  my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
+	my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
 
-  ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
-  ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
 
-  if ($trace1->errors) {
-    $trace1->printErrors;
-  }
-} <>  ;
+	if ($trace1->errors) {
+	    $trace1->printErrors;
+	}
+    }
+	
+} <>;
 
 MCE::Loop::finish;
