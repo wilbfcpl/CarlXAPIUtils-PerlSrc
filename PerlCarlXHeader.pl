@@ -62,8 +62,12 @@ use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 use constant INSTITUTE_CODE => 1770;
 use constant FCPL_BRANCH=>'HDQ';
 
-our ($opt_g,$opt_p);
-getopts('gp');
+
+# -u user -x password
+
+our ($opt_u,$opt_x,$opt_g,$opt_p);
+getopts('u:x:gp');
+
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -90,9 +94,11 @@ unless (defined $wsdl)
 }
 
 my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);#
+my $user = $opt_u ;
+my $passwd = $opt_x;
 
-my $user = prompt("Username:") ;
-my $passwd = prompt ("Password:") ;
+#my $user = prompt("Username:") ;
+#my $passwd = prompt ("Password:") ;
 
 unless ( (defined $user) and (defined $passwd))
     {
