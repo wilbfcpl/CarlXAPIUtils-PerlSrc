@@ -2,9 +2,10 @@
 # Created: Feb 16, 2023
 # Version: 0.01
 #
-# Usage: perl [-d] AddNoteMCE.pl [-r ] [-x] [-g] filename.csv
+# Usage: perl [-d] AddNoteGrad.pl [-r ] [-x] [-g] filename.csv or patronid
 # -d Debug/verbose captured by perl exe, remaining options left for this script
 # -g Logging
+# -p Production wsdl file and server
 # checked but not used: -r, -x
 # filename.csv is a file  with FCPS Student information for their FCPL Student Success Card Account
 # Warning.
@@ -58,8 +59,8 @@ use constant WITHDRAW_SOFTBLOCK_NOTE_TYPE => 2;
 use constant INFO_NOTE_TYPE => 501;
 
 #Command line input variable handling
-our ($opt_g,$opt_r,$opt_x);
-getopts('gdrx:');
+our ($opt_g,$opt_p,$opt_r,$opt_x);
+getopts('gprx:');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -79,7 +80,8 @@ my $PATRONID_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file 
 INFO "[$local_filename" . ":" . __LINE__ . "]$PATRONID_FILE";
 
 #See the CPAN,web XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPInew.wsdl';
+#my $wsdlfile = 'PatronAPInew.wsdl';
+my $wsdlfile =  ( defined $opt_p ?  'PatronAPI.wsdl' : 'PatronAPInew.wsdl');
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -124,13 +126,16 @@ my %AddNoteRequest;
 
 # Loop until the end of the input file with the first line an assumed header.
 
-mce_loop_f {
+mce_loop {
+     my ($mce, $chunk_ref, $chunk_id) = @_;
 
-  chomp;
-  INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+       foreach my $line (@$chunk_ref) {
+        chomp $line;
+        next if $line eq '';  # Skip empty lines
 
 
-#  ($patronid, $noteid, $name, $btype, $notedate, $notetype,$branch,$actdate, $lastbranch, $alias)=split(/,/);
+	INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+
 
   ($patronid)=split(/,/);  
 
@@ -142,10 +147,13 @@ mce_loop_f {
     $AddNote{PatronID}= $patronid;
   
   my ($result1,$trace1)=$call1->(%AddNoteRequest);
-  if ($trace1->errors) {
+	
+   if ($trace1->errors) {
     $trace1->printErrors;
+   }
   }
-} $PATRONID_FILE ;
+ } <> ; 
+#} $PATRONID_FILE ;
 
 MCE::Loop::finish;
 
