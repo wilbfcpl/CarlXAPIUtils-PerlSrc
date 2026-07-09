@@ -1,4 +1,4 @@
-project: https://platform.activestate.com/FredCoMdLib/CarlXAPIUtils-PerlEnv?branch=main&commitID=2f8a1a75-bda8-4330-99aa-f87b162b71b1
+project: https://platform.activestate.com/wilb/CarlXAPIUtils-Perl?branch=main&commitID=15da0bcd-a1cd-46ba-b5c8-ac98a3ef796b
 config_version: 1
 scripts:
   - name: activationMessage
