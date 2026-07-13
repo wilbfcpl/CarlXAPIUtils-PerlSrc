@@ -72,12 +72,13 @@ my $trace;
 # Local filename is the name of this script
 
 my $local_filename=$0;
-$local_filename =~ s/.+\\([A-z]+.pl)/$1/;
+#my $local_filename="addNoteGrad";
+#$local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
 #PATRONID_FILE is the input file having the PatronIDs for the note
-my $PATRONID_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
+# my $PATRONID_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
-INFO "[$local_filename" . ":" . __LINE__ . "]$PATRONID_FILE";
+# INFO "[$local_filename" . ":" . __LINE__ . "]$PATRONID_FILE";
 
 #See the CPAN,web XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 #my $wsdlfile = 'PatronAPInew.wsdl';
