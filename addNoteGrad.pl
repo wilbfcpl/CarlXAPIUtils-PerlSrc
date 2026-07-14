@@ -6,7 +6,8 @@
 # -d Debug/verbose captured by perl exe, remaining options left for this script
 # -g Logging
 # -p Production wsdl file and server
-# checked but not used: -r, -x
+# -r report/read only don't send the SOAP request
+# checked but not used: -x
 # filename.csv is a file  with FCPS Student information for their FCPL Student Success Card Account
 # Warning.
 # Input file filename.csv should only have Students that have Soft-Block status.
@@ -146,13 +147,15 @@ mce_loop {
 	   ) ;
   
     $AddNote{PatronID}= $patronid;
-  
-  my ($result1,$trace1)=$call1->(%AddNoteRequest);
+	unless (defined $opt_r) {
+	    my ($result1,$trace1)=$call1->(%AddNoteRequest);
 	
-   if ($trace1->errors) {
-    $trace1->printErrors;
-   }
-  }
+	    if ($trace1->errors) {
+		$trace1->printErrors;
+	    }
+	}
+       }
+	
  } <> ; 
 #} $PATRONID_FILE ;
 
