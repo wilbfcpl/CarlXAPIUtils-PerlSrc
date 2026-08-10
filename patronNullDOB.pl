@@ -1,24 +1,34 @@
 # Author:  <wblake@CB95043>
 # Created: June 5, 2025
-# Version: 0.01
+# Version: 0.02
 #
-# Usage: perl [-d] [-r ] [-x] [-g] patronAllowEmailMCE.pl filename.csv
-# -d Debug/verbose 
-# -g Logging
+# Usage: perl [-d] [-r ] [-x] [-g] patronNullDOB.pl filename.csv
+# Usage: echo "11982920065895" |  perl patronNullDOB -g
+#
+# Options:
+# -g Logging Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 # -x don't send email
-# filename.csv hasPatron barcode, borrower name, borrower type,and email address
+#
+# filename.csv has Patron barcode, borrower name, borrower type,and email address
 # Input file filename.csv should only have existing Patron Records
 #$patronid,$name,$bty,$email
-# Note that Allow Email needs an email address in the patron record to "stick."
 #Debug mode- a lot more SOAP messages.
-# MCE Loop has error if first line of in file has column label headings
+#
+# Set the patron record Date of Birth field to NULL, intended for Student
+# Borrower accounts where a DOB  breaks the CarlX Patron Loader.
+# Student borrower accounts should not have DOB and this script does that.
+#
+# Perl MCE Loop has error if first line of in file has column label headings
 # Uses local copy of CarlX WSDL file PatronAPI.wsdl for PatronAPI requests
 #
 # SOAPUI tool can provide a sandbox for the WSDL file and PatronAPI requests.
 # Note that API call and response return appear to take one second in real time.
-# An SQL Query to select patrons from an imported table PATRONSDONOTSENDEMAIL
-#select sample.name, sample.email, patron.emailnotices from carlreports.PATRONSDONOTSENDEMAIL sample, carlreports.PATRON_V2 patron
-#where sample.patronid = patron.patronid order by sample.name;
+#
+# An SQL query can find PatroniDs for Student borrower type patrons with
+# a DOB.
+# select patronid,name,street1,birthdate, actdate, regdate, editdate,status
+# from patron_v2 inner join bty_v2 on patron_v2.bty=bty_v2.btynumber
+# where btycode='STUDNT' and birthdate is not null order by patronid ;
 #
 # PatronAPI
 # http://fcplapp.fcpl.org:8081/APIDocs/service_endpoints_PatronServiceImplService.html#service_endpoints_PatronServiceImplService_method_updatePatron
@@ -28,7 +38,7 @@ use strict;
 use warnings FATAL => 'all';
 use diagnostics;
 
-use LWP::UserAgent;
+#use LWP::UserAgent;
 use XML::Compile::WSDL11;
 use XML::Compile::SOAP11;
 use XML::Compile::Transport::SOAPHTTP;
@@ -44,18 +54,29 @@ use IO::Prompt::Tiny qw/prompt/;
 Log::Log4perl->easy_init($TRACE);
 # Reduce number of magic values where possible
 use constant SEARCHTYPE_PATRONID => 'Patron ID';
+use constant PATRON_MODIFIERS_DEBUG_MODE_ON => 1;
+use constant PATRON_MODIFIERS_REPORT_MODE_ON => 1;
+use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 
-#use constant NULL_DOB => 'nil'  ;
-#use constant NULL_DOB => '1971-01-01'  ;
+
+
+
+#use constant NULL_DOB => "2015-01-01" ;
+# use constant NULL_DOB => "01/01/2015"  ;
+use constant NULL_DOB => "1970-01-01"  ;
 #use constant NULL_DOB => '-'  ;
 #use constant NULL_DOB => undef ;
+#use constant NULL_DOB => 'nil'  ;"  ;
 #use constant NULL_DOB =>  'xsi:nil="true"'  ;
 #use constant NULL_DOB =>  "\x07F" ;
-use constant NULL_DOB =>  "00/00/0000" ;
+#use constant NULL_DOB =>  "00/00/0000" ;
+#use constant NULL_DOB =>  "//" ;
+#use constant NULL_DOB =>  "" ;
 
-#Command line input variable handling
-our ($opt_g,$opt_r,$opt_x);
-getopts('grx');
+#Command line input variable handling g debug, p production mode/production server
+our ($opt_g,$opt_p);
+getopts('gp');
+
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -67,12 +88,13 @@ my $trace;
 my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
-my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
-INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPInew.wsdl';
+# my $wsdlfile = 'PatronAPInew.wsdl';
+my $wsdlfile =  ( defined $opt_p ?  'PatronAPI.wsdl' : 'PatronAPInew.wsdl');
+
+INFO "[$local_filename" . ":" . __LINE__ . "]wsdlfile: $wsdlfile";
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -104,8 +126,10 @@ my %PatronUpdateRequest;
         SearchType => SEARCHTYPE_PATRONID,
         Patron => \%PatronUpdateValues,
         Modifiers=> {
-        DebugMode=>1,
-        ReportMode=>1,}
+	    DebugMode=>PATRON_MODIFIERS_DEBUG_MODE_ON,
+	    ReportMode=>PATRON_MODIFIERS_REPORT_MODE_ON,
+	    StaffID=>PATRON_MODIFIERS_STAFFID_WIL
+	}
        );
 
  ERROR "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
@@ -123,24 +147,30 @@ my %PatronUpdateRequest;
 
 # Loop until the end of the input file with the first line an assumed header.
 
-mce_loop_f {
+mce_loop {
 
-  chomp;
-  INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+ my ($mce, $chunk_ref, $chunk_id) = @_;
 
-  # Expect only the patronid in the simplest input file.
-    #        ($patronid, $name,$bty,$email)  = split(/,/);
-  ($patronid)  = split(/,/);
+ foreach my $line (@$chunk_ref) {
+        chomp $line;
+        next if $line eq '';  # Skip empty lines
+	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
-  $PatronUpdateRequest{SearchID}= $patronid;
+	($patronid)  = split(/,/,$line);
 
-  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
+	$PatronUpdateRequest{SearchID}= $patronid;
 
-  my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
+	INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
 
-  if ($trace1->errors) {
-    $trace1->printErrors;
-  }
-} $PATRON_FILE ;
+	my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
+	
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
+	
+	if ($trace1->errors) {
+	    $trace1->printErrors;
+	}
+ }
+} <> ;
 
 MCE::Loop::finish;

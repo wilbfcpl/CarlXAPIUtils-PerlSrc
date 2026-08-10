@@ -1,11 +1,12 @@
 # Author:  <wblake@CB95043>
 # Created: Feb 16, 2023
-# Version: 0.01
+# Version: 0.02
 #
-# Usage: perl [-d] AddNoteMCE.pl [-r ] [-x] [-g] filename.csv
-# -d Debug/verbose captured by perl exe, remaining options left for this script
-# -g Logging
-# checked but not used: -r, -x
+# Usage: perl [-d] AddNoteGrad.pl [-r ] [-x] [-g] filename.csv
+# echo "11982021684457" |  perl addNoteGrad.pl -g
+# -g Log Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
+# -p PRODUCTION SERVER update mode- BE CAREFUL and BE SURE
+
 # filename.csv is a file  with FCPS Student information for their FCPL Student Success Card Account
 # Warning.
 # Input file filename.csv should only have Students that have Soft-Block status.

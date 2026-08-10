@@ -1,10 +1,12 @@
 # Author:  <wblake@CB95043>
 # Created: June 6, 2025
-# Version: 0.01
+# Version: 0.02
 #
 # Usage: perl [-d] [-r ] [-x] [-g] patronSendHoldAvailable.pl filename.csv
-# -d Debug/verbose 
-# -g Logging
+# Usage: echo "11982021684457" |  perl patronSendHoldAvailable.pl -xg
+
+# -g Log Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
+# -p PRODUCTION SERVER update mode- BE CAREFUL and BE SURE
 # -x Hold Available True, otherwise False.
 # filename.csv hasPatron barcode, borrower name, borrower type,and email address
 # filename.csv format needs to have iso-latin-1-dos  or ISO-8859-1
