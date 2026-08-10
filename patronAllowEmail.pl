@@ -1,11 +1,15 @@
 # Author:  <wblake@CB95043>
 # Created: June 5, 2025
-# Version: 0.01
+# Version: 0.02
 #
-# Usage: perl  patronAllowEmail.pl [-g] [-x] filename.csv
-#  
-# -g Logging
+# Usage: perl patronAllowEmail.pl [-g] [-x] filename.csv
+# Usage: echo "11982021684457" |  perl patronAllowEmail.pl -xg
+#
+# Options:
+# -g Logging Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
+# -p PRODUCTION SERVER update mode- BE CAREFUL and BE SURE
 # -x don't send email
+
 # filename.csv hasPatron barcode, borrower name, borrower type,and email address
 # Input file filename.csv should only have existing Patron Records
 #$patronid,$name,$bty,$email
@@ -84,7 +88,8 @@ unless ( defined $call1 )
 }
 
 
-my ($patronid,$name,$bty,$email) ;
+#my ($patronid,$name,$bty,$email) ;
+my ($patronid) ;
 
 my %PatronRequest;
 my %PatronUpdateValues;
