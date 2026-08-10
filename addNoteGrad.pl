@@ -2,12 +2,10 @@
 # Created: Feb 16, 2023
 # Version: 0.01
 #
-# Usage: perl [-d] AddNoteGrad.pl [-r ] [-x] [-g] filename.csv or patronid
+# Usage: perl [-d] AddNoteMCE.pl [-r ] [-x] [-g] filename.csv
 # -d Debug/verbose captured by perl exe, remaining options left for this script
 # -g Logging
-# -p Production wsdl file and server
-# -r report/read only don't send the SOAP request
-# checked but not used: -x
+# checked but not used: -r, -x
 # filename.csv is a file  with FCPS Student information for their FCPL Student Success Card Account
 # Warning.
 # Input file filename.csv should only have Students that have Soft-Block status.
@@ -60,8 +58,8 @@ use constant WITHDRAW_SOFTBLOCK_NOTE_TYPE => 2;
 use constant INFO_NOTE_TYPE => 501;
 
 #Command line input variable handling
-our ($opt_g,$opt_p,$opt_r,$opt_x);
-getopts('gprx:');
+our ($opt_g,$opt_p);
+getopts('gp');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -73,13 +71,8 @@ my $trace;
 # Local filename is the name of this script
 
 my $local_filename=$0;
-#my $local_filename="addNoteGrad";
-#$local_filename =~ s/.+\\([A-z]+.pl)/$1/;
+$local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
-#PATRONID_FILE is the input file having the PatronIDs for the note
-# my $PATRONID_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
-
-# INFO "[$local_filename" . ":" . __LINE__ . "]$PATRONID_FILE";
 
 #See the CPAN,web XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 #my $wsdlfile = 'PatronAPInew.wsdl';
@@ -104,7 +97,11 @@ my $patronid;
 my %AddNote;
 my %AddNoteRequest;
 
- 
+    %AddNote =
+            ( NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
+	      NoteText => GRAD_SOFTBLOCK_NOTE_TEXT,
+	    ) ;
+
     %AddNoteRequest =
       (
        Note => \%AddNote,
@@ -129,35 +126,32 @@ my %AddNoteRequest;
 # Loop until the end of the input file with the first line an assumed header.
 
 mce_loop {
-     my ($mce, $chunk_ref, $chunk_id) = @_;
 
-       foreach my $line (@$chunk_ref) {
+
+  my ($mce, $chunk_ref, $chunk_id) = @_;
+
+    foreach my $line (@$chunk_ref) {
         chomp $line;
         next if $line eq '';  # Skip empty lines
+	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
+	($patronid)  = split(/,/,$line);
 
-	INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
-
-
-  ($patronid)=split(/,/);  
-
-   %AddNote =
-            ( NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
-	     NoteText => GRAD_SOFTBLOCK_NOTE_TEXT,
-	   ) ;
   
-    $AddNote{PatronID}= $patronid;
-	unless (defined $opt_r) {
-	    my ($result1,$trace1)=$call1->(%AddNoteRequest);
+	$AddNote{PatronID}= $patronid;
+
+	INFO "[$local_filename" . ":" . __LINE__ . "]AddNoteRequest " . Dumper(\%AddNoteRequest) ;
 	
-	    if ($trace1->errors) {
-		$trace1->printErrors;
-	    }
+	my ($result1,$trace1)=$call1->(%AddNoteRequest);
+
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
+
+	if ($trace1->errors) {
+	    $trace1->printErrors;
 	}
-       }
-	
- } <> ; 
-#} $PATRONID_FILE ;
+    }
+} <> ;
 
 MCE::Loop::finish;
 

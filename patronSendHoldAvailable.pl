@@ -31,7 +31,7 @@ use strict;
 use warnings FATAL => 'all';
 use diagnostics;
 
-use LWP::UserAgent;
+#use LWP::UserAgent;
 use XML::Compile::WSDL11;
 use XML::Compile::SOAP11;
 use XML::Compile::Transport::SOAPHTTP;
@@ -44,15 +44,18 @@ use Log::Log4perl qw(:easy);
 use IO::Prompt::Tiny qw/prompt/;
 
 #TRACE,DEBUG,INFO,WARN,ERROR,FATAL
-Log::Log4perl->easy_init($WARN);
+Log::Log4perl->easy_init($INFO);
 # Reduce number of magic values where possible
 use constant SEARCHTYPE_PATRONID => 'Patron ID';
 use constant SEND_HOLD_AVAILABLE_TRUE => 'true' ;
 use constant SEND_HOLD_AVAILABLE_FALSE => 'false' ;
+use constant PATRON_MODIFIERS_DEBUG_MODE_ON => 1;
+use constant PATRON_MODIFIERS_REPORT_MODE_ON => 1;
+use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 
 #Command line input variable handling
-our ($opt_g,$opt_r,$opt_x);
-getopts('grx');
+our ($opt_g,$opt_p,$opt_x);
+getopts('gpx');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -64,12 +67,9 @@ my $trace;
 my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
-my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
-
-INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
 
 #See CPAN, web pages XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPI.wsdl';
+my $wsdlfile =  ( defined $opt_p ?  'PatronAPI.wsdl' : 'PatronAPInew.wsdl');
 
 my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
 
@@ -85,7 +85,8 @@ unless ( defined $call1 )
 }
 
 
-my ($patronid,$name,$bty,$email) ;
+#my ($patronid,$name,$bty,$email) ;
+my ($patronid) ;
 my %PatronUpdateValues;
 my %PatronUpdateRequest;
 
@@ -98,8 +99,10 @@ my %PatronUpdateRequest;
         SearchType => SEARCHTYPE_PATRONID,
         Patron => \%PatronUpdateValues,
         Modifiers=> {
-        DebugMode=>0,
-        ReportMode=>0}
+	    DebugMode=>PATRON_MODIFIERS_DEBUG_MODE_ON,
+	    ReportMode=>PATRON_MODIFIERS_REPORT_MODE_ON,
+	    StaffID=>PATRON_MODIFIERS_STAFFID_WIL
+	}
        );
 
  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
@@ -117,24 +120,33 @@ my %PatronUpdateRequest;
 
 # Loop until the end of the input file with the first line an assumed header.
 
-mce_loop_f {
+mce_loop {
+    
+    my ($mce, $chunk_ref, $chunk_id) = @_;
 
-  chomp;
-  INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+     foreach my $line (@$chunk_ref) {
+        chomp $line;
+        next if $line eq '';  # Skip empty lines
+	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
-  # Expect only the patronid in the simplest input file.
-    #        ($patronid, $name,$bty,$email)  = split(/,/);
-  ($patronid)  = split(/,/);
 
-  $PatronUpdateRequest{SearchID}= $patronid;
+	# Expect only the patronid in the simplest input file.
+	#  ($patronid, $name,$bty,$email)  = split(/,/);
+	($patronid)  = split(/,/);
 
-  INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
+	$PatronUpdateRequest{SearchID}= $patronid;
 
-  my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
+	INFO "[$local_filename" . ":" . __LINE__ . "]PatronUpdateRequest " . Dumper(\%PatronUpdateRequest) ;
 
-  if ($trace1->errors) {
-    $trace1->printErrors;
-  }
-} $PATRON_FILE ;
+	my ($result1,$trace1)=$call1->(%PatronUpdateRequest);
+
+	# ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result1);
+	# ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace1);
+
+	if ($trace1->errors) {
+	    $trace1->printErrors;
+	}
+     }
+} <> ;
 
 MCE::Loop::finish;
