@@ -63,7 +63,7 @@ use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 
 #use constant NULL_DOB => "2015-01-01" ;
 # use constant NULL_DOB => "01/01/2015"  ;
-use constant NULL_DOB => "1970-01-01"  ;
+use constant NULL_DOB => "1900-01-01"  ;
 #use constant NULL_DOB => '-'  ;
 #use constant NULL_DOB => undef ;
 #use constant NULL_DOB => 'nil'  ;"  ;
