@@ -28,7 +28,6 @@ use strict;
 use warnings FATAL => 'all';
 use diagnostics;
 
-#use LWP::UserAgent;
 use XML::Compile::WSDL11;
 use XML::Compile::SOAP11;
 use XML::Compile::Transport::SOAPHTTP;
@@ -91,7 +90,6 @@ unless ( defined $call1 )
 #my ($patronid,$name,$bty,$email) ;
 my ($patronid) ;
 
-my %PatronRequest;
 my %PatronUpdateValues;
 my %PatronUpdateRequest;
 
