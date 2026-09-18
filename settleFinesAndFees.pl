@@ -1,8 +1,30 @@
 # Author:  <wblake@CB95043>
 # Created: May 25, 2026
-# Version: 0.02
+# Version: 0.04
 #
 # Changelog:
+# 0.04 (2026-09-18):
+#   - The PatronAPI WSDL is now retrieved from the CarlX server over HTTP and parsed straight
+#     out of memory; no copy is written to disk. -p keeps selecting production (port 8080)
+#     versus test (port 8081). Previously $wsdl was assigned the URL as a bare string, so the
+#     later $wsdl->compileClient() calls failed because a string is not an
+#     XML::Compile::WSDL11 object. XML::Compile treats a plain string as a filename, so the
+#     fetched document is handed to it as a SCALAR ref instead.
+#   - Added _load_wsdl_xml(), which GETs the WSDL and returns the raw bytes, plus a fallback to
+#     the local WSDL file (PatronAPI.wsdl with -p, otherwise PatronAPInew.wsdl) when the fetch
+#     fails, so a network outage does not stop the script from running.
+#   - Both CarlX servers now declare ItemBranch in the transaction:Transaction complexType
+#     themselves, so the hand-edit described under 0.02 is obsolete. Nothing has to be
+#     patched into the fetched WSDL; GetPatronTransactionsResponse items carrying ItemBranch
+#     decode straight out of the served schema.
+# 0.03 (2026-09-17):
+#   - Suppressed the per-record Data::Dumper output of the decoded result, the
+#     XML::Compile::SOAP::Trace object and the whole %GetPatronTransactionsResponse hash for
+#     successful calls. A successful record now logs a single summary line; the full dumps are
+#     emitted only when the call fails (undef result, trace errors, or a non-zero
+#     ResponseStatus/Code) or when -g is given.
+#   - Added _response_body(), _response_statuses(), _call_failure() and _transactions_summary()
+#     helpers to classify a call as success/failure and to build the one-line summary.
 # 0.02 (2026-09-17):
 #   - Fixed basic_auth() transport_hook to explicitly `return $res;`. Previously the sub's
 #     return value fell through to the last INFO() call in its success branch (a truthy
@@ -13,6 +35,8 @@
 #     PatronAPInew.wsdl/PatronAPI.wsdl, between Title and TransactionBranch, matching the field
 #     actually returned by the live CarlX server. Without it, XML::Compile refused to decode
 #     any GetPatronTransactionsResponse item (e.g. LostItem) that included ItemBranch.
+#     (Superseded in 0.04: the server now declares ItemBranch itself, so this local edit only
+#     still matters for the offline fallback copies.)
 #   - GetPatronTransactionsResponse item collections (ChargeItems, ClaimedItems, FineItems,
 #     HoldItems, LostItems, OverdueItems, ReserveItems, TraceItems, UnavailableHoldItems) are
 #     now flattened from XML::Compile's choice-group shape
@@ -23,7 +47,7 @@
 #
 # Usage:  echo "11982022414417,#1770000158859,15.41" | perl .\settleFinesAndFees.pl -g -u frederick -x mnXYEZYE%T5H7mlPEmgb -r
 # -g Logging
-# -p Production wsdl file and server
+# -p Production wsdl url and server (port 8080); without it the test instance (port 8081)
 # -r read only
 # filename.csv hasPatron barcode, hash177 value, fineamount,finedate,item,name,status,btycode,editdate,actdate
 ##177XXXXX itemid generated after the item goes lost
@@ -34,7 +58,8 @@
 #
 # Debug mode- a lot more SOAP messages.
 # MCE Loop has error if first line of in file has column label headings
-# Uses local copy of CarlX WSDL file PatronAPI.wsdl for PatronAPI requests
+# Fetches the CarlX PatronAPI.wsdl from the server over HTTP and parses it in memory; the local
+# copies (PatronAPI.wsdl / PatronAPInew.wsdl) are only used if that fetch fails
 #
 # SOAPUI tool can provide a sandbox for the WSDL file and PatronAPI requests.
 # Note that API call and response return appear to take one second in real time.
@@ -79,7 +104,7 @@ use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 use constant INSTITUTE_CODE => 1770;
 use constant FCPL_BRANCH=>'HDQ';
 
-#Command line input variable handling g debug, p production mode/production server
+#Command line input variable handling g debug, p production mode server
 # -u user -x password
 
 use constant WAIVE_COMMENT => 'Processing Fee' ;
@@ -98,6 +123,13 @@ use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
 my $read_only_mode = ( defined $opt_r ? 1 : 0);
 
+# -g also turns the per-record Data::Dumper traces back on. Without it only failed
+# calls are dumped; successful calls log a one line summary instead.
+my $verbose_dump = ( defined $opt_g ? 1 : 0);
+
+$Data::Dumper::Indent   = 1;
+$Data::Dumper::Sortkeys = 1;
+
 my $result ;
 my $trace;
 
@@ -105,18 +137,52 @@ my $local_filename=$0;
 
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
+# Only used as a fallback when the live WSDL cannot be fetched.
 my $wsdlfile =  ( defined $opt_p ?  'PatronAPI.wsdl' : 'PatronAPInew.wsdl');
 
-INFO "[$local_filename" . ":" . __LINE__ . "]wsdlfile: $wsdlfile";
+# -p selects the production CarlX server (8080), otherwise the test instance (8081).
+# Both serve a self contained document - every xs:schema is inlined and there are no
+# xs:import/@schemaLocation references - so one HTTP GET is enough and no copy of the
+# WSDL has to be kept on disk.
+my $wsdlurl = ( defined $opt_p ? 'http://fcplapp.fcpl.org:8080/CarlXAPI/PatronAPI.wsdl' : 'http://fcplapp.fcpl.org:8081/CarlXAPI/PatronAPI.wsdl');
 
-my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
+INFO "[$local_filename" . ":" . __LINE__ . "]wsdlurl: $wsdlurl (fallback wsdlfile: $wsdlfile)";
+
+my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);#
+
+# Fetch the WSDL document as raw bytes. ->content rather than ->decoded_content is
+# deliberate: the document carries its own <?xml ... encoding="..."?> declaration and
+# XML::LibXML wants the undecoded octets so that declaration stays truthful.
+# Returns undef (after logging) when the server cannot be reached.
+sub _load_wsdl_xml {
+    my ($url) = @_;
+    INFO "[$local_filename" . ":" . __LINE__ . "]Fetching WSDL from $url";
+    my $res = $ua->get($url);
+    unless ($res->is_success) {
+	WARN "[$local_filename" . ":" . __LINE__ . "]WSDL fetch failed: " . $res->status_line;
+	return undef;
+    }
+    return $res->content;
+}
+
+my $wsdl;
+my $wsdl_xml = _load_wsdl_xml($wsdlurl);
+
+if (defined $wsdl_xml) {
+    # XML::Compile takes a plain string as a filename; a SCALAR ref is parsed as XML text,
+    # which is what keeps the fetched WSDL in memory instead of on disk.
+    $wsdl = XML::Compile::WSDL11->new(\$wsdl_xml);
+    INFO "[$local_filename" . ":" . __LINE__ . "]wsdl source: $wsdlurl (in memory)";
+}
+else {
+    WARN "[$local_filename" . ":" . __LINE__ . "]Falling back to local wsdlfile: $wsdlfile";
+    $wsdl = XML::Compile::WSDL11->new($wsdlfile);
+}
 
 unless (defined $wsdl)
 {
     die "[$local_filename" . ":" . __LINE__ . "]Failed XML::Compile call\n" ;
 }
-
-my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);#
 
 # my $user = prompt("Username:") ;
 
@@ -162,7 +228,7 @@ my $call1 = $wsdl->compileClient('SettleFinesAndFees',  transport_hook => \&basi
 my $call2 = $wsdl->compileClient('GetPatronTransactions');
 
 unless ( defined $call1 )
-{ die "[$local_filename" . ":" . __LINE__ . "] SOAP/WSDL Error $wsdl $call1 \n" ;
+{ die "[$local_filename" . ":" . __LINE__ . "] SOAP/WSDL Error $wsdlurl \n" ;
 }
 
 
@@ -212,15 +278,15 @@ my %GetPatronTransactionsResponse;
       EnvBranch =>FCPL_BRANCH		    }
       ) ;
 
-# Mirrors the GetPatronTransactionsResponse element from PatronAPInew.wsdl
+# Mirrors the GetPatronTransactionsResponse element from the CarlX PatronAPI WSDL
 # (patronAPI:GetPatronTransactionsResponse extends transaction:PatronTransactionSummary).
 # ResponseStatuses is an arrayref of response:ResponseStatus hashrefs.
 # Each *Items key is an arrayref of the corresponding transaction:*Item hashrefs
 # (ChargeItem, ClaimedItem, FineItem, HoldItem, LostItem, OverdueItem, ReserveItem,
 # TraceItem, UnavailableHoldItem), each of which extends transaction:Transaction.
-# transaction:Transaction now also includes ItemBranch (added to PatronAPInew.wsdl
-# between Title and TransactionBranch to match the live CarlX server response), so
-# every flattened item hashref below carries an ItemBranch field alongside Branch.
+# transaction:Transaction includes ItemBranch (xs:short, between Title and
+# TransactionBranch) natively in the served WSDL, so every flattened item hashref below
+# carries an ItemBranch field alongside Branch.
 %GetPatronTransactionsResponse = (
     ResponseStatuses      => [],    # response:ResponseStatus[]
     PatronID              => undef,
@@ -260,6 +326,65 @@ sub _flatten_choice_items {
     return [ map { $_->{$item_name} } @$entries ];
 }
 
+# XML::Compile::WSDL11 nests the decoded body under the response message part name
+# (e.g. GetPatronTransactionsResponse). Return the inner hashref carrying ResponseStatuses.
+sub _response_body {
+    my ($res) = @_;
+    return undef unless ref $res eq 'HASH';
+    return $res if exists $res->{ResponseStatuses};
+    for my $part (values %$res) {
+	return $part if ref $part eq 'HASH' && exists $part->{ResponseStatuses};
+    }
+    return $res;
+}
+
+# ResponseStatuses is either already flattened (arrayref) or still in XML::Compile's
+# choice shape: { cho_ResponseStatus => [ { ResponseStatus => {...} }, ... ] }.
+sub _response_statuses {
+    my ($body) = @_;
+    return () unless ref $body eq 'HASH';
+    my $statuses = $body->{ResponseStatuses};
+    return grep { ref $_ eq 'HASH' } @$statuses if ref $statuses eq 'ARRAY';
+    if (ref $statuses eq 'HASH') {
+	my $entries = $statuses->{cho_ResponseStatus};
+	return () unless ref $entries eq 'ARRAY';
+	return grep { ref $_ eq 'HASH' }
+	       map  { ref $_ eq 'HASH' ? ( $_->{ResponseStatus} || $_ ) : () } @$entries;
+    }
+    return ();
+}
+
+# Returns a human readable reason when a call did not succeed, undef when it did.
+# A call is successful when it decoded to a hashref, the trace reports no errors and
+# every ResponseStatus carries Code 0.
+sub _call_failure {
+    my ($res, $trace) = @_;
+    return 'no decoded result returned' unless ref $res eq 'HASH';
+    return 'SOAP/transport errors reported in trace' if $trace && $trace->errors;
+    my @bad = grep { defined $_->{Code} && $_->{Code} != 0 } _response_statuses(_response_body($res));
+    return undef unless @bad;
+    return join '; ',
+	map { sprintf '%s %s: %s', ( $_->{Severity} // 'ERROR' ), ( $_->{Code} // '?' ), ( $_->{ShortMessage} // '' ) } @bad;
+}
+
+# One line replacement for the full Dumper(%GetPatronTransactionsResponse) output.
+sub _transactions_summary {
+    my ($data) = @_;
+    return 'no transaction data' unless ref $data eq 'HASH';
+    return sprintf(
+	'PatronID %s GUID %s fines %s/%s lost %s/%s charged %s overdue %s holds %s',
+	$data->{PatronID}          // '?',
+	$data->{GUID}              // '?',
+	$data->{FineItemsCount}    // 0,
+	$data->{FineTotal}         // 0,
+	$data->{LostItemsCount}    // 0,
+	$data->{LostItemFeeTotal}  // 0,
+	$data->{ChargedItemsCount} // 0,
+	$data->{OverdueItemsCount} // 0,
+	$data->{HoldItemsCount}    // 0,
+	);
+}
+
 # Use MCE::Loop to process lines in parallel
 MCE::Loop::init(
     max_workers => 4,
@@ -278,10 +403,8 @@ mce_loop {
        foreach my $line (@$chunk_ref) {
         chomp $line;
         next if $line eq '';  # Skip empty lines
-	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
+	INFO "[$local_filename" . ":" . __LINE__ . "]Record $line";
 
-    
-    INFO "[$local_filename" . ":" . __LINE__ . "]Record $_ ";
     my ($patronid, $hashoneseven, $amount)  = split(/,/, $line);
 
 
@@ -315,18 +438,28 @@ mce_loop {
 		    TraceItems           => _flatten_choice_items($response_data->{TraceItems}, 'TraceItem'),
 		    UnavailableHoldItems => _flatten_choice_items($response_data->{UnavailableHoldItems}, 'UnavailableHoldItem'),
 		    );
-		INFO "[$local_filename" . ":" . __LINE__ . "]GetPatronTransactionsResponse: " . Dumper(\%GetPatronTransactionsResponse);
+		INFO "[$local_filename" . ":" . __LINE__ . "]GetPatronTransactions: "
+		    . _transactions_summary(\%GetPatronTransactionsResponse);
+		DEBUG "[$local_filename" . ":" . __LINE__ . "]GetPatronTransactionsResponse: "
+		    . Dumper(\%GetPatronTransactionsResponse)
+		    if $verbose_dump;
 	    }
 	}
-	
-    	
-    INFO "[$local_filename" . ":" . __LINE__ . "]Record $_" . " Call Completed";
 
-    ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result);
-    ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace);
-    
-    if ($trace->errors) {
-       INFO $trace->printErrors;
+    # Only dump the decoded result and the (very large) SOAP trace when the call
+    # actually failed, or when -g asked for the verbose traces.
+    my $failure = _call_failure($result, $trace);
+
+    if (defined $failure) {
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Record $line FAILED: $failure";
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result);
+	ERROR "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace);
+	INFO $trace->printErrors if $trace && $trace->errors;
+    }
+    else {
+	INFO "[$local_filename" . ":" . __LINE__ . "]Record $line Call Completed";
+	DEBUG "[$local_filename" . ":" . __LINE__ . "]Result: " . Dumper($result) if $verbose_dump;
+	DEBUG "[$local_filename" . ":" . __LINE__ . "]Trace: " . Dumper($trace)   if $verbose_dump;
     }
        }
 
