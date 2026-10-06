@@ -29,7 +29,8 @@ use constant GOOD => 'G';
 
 #MSD Specific values
 use constant MSD_ID_PREFIX_FREDERICK => "119829219";
-use constant MSD_ID_PREFIX_COLUMBIA =>"3";
+use constant MSD_ID_PREFIX_COLUMBIA => "119829219";
+#use constant MSD_ID_PREFIX_COLUMBIA =>"3";
 use constant MSD_ID_LEN => 5;
 use constant MSD_SCHOOL => "Maryland School for Deaf";
 use constant MSD_FREDERICK_ADDRESS => "101 Clarke Place";
