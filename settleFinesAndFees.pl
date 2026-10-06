@@ -112,7 +112,7 @@ use constant SSC_PAYTYPE_WAIVE => 'Waive';
 use constant SSC_PAYTYPE_PAY => 'Pay';
 use constant SSC_PAYTYPE_CANCEL => 'Cancel';
 use constant PAY_METHOD=>'Cash';
-use constant PAY_AMOUNT=>23.93;
+#use constant PAY_AMOUNT=>23.93;
 use constant OCCUR => 1;
 
     
