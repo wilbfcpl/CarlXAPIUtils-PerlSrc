@@ -37,9 +37,9 @@
 #     ({ "cho_<ItemType>" => [ { <ItemType> => {...} } ] }) into plain arrayrefs of item
 #     hashrefs via _flatten_choice_items().
 #
-# Usage: perl  deletePatronsNew.pl [-g] [-p] filename.csv
+# Usage: perl  deletePatronsNew.pl [-g] [-p] [-r] filename.csv
 #
-# Usage:  echo "11982022414417 | perl .\deletePatronNew.pl -g -u frederick -x mnXYEZYE%T5H7mlPEmgb -r
+# Usage:  echo "11982022414417 | perl .\deletePatronNew.pl -g  -r
 # -g Logging
 # -p Production wsdl url, server (port 8080); without test instance (port 8081)
 # -r read only
