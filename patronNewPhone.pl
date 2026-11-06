@@ -1,14 +1,13 @@
-# Author:  <wblake@CB95043> -*-c-perl-*-
-# Created: June 5, 2025
+# Author:  <wblake@CB95043> -*-cperl-*-
+# Created: Nov 5, 2026
 # Version: 0.02
 #
-# Usage: perl patronAllowEmail.pl [-g] [-x] filename.csv
+# Usage: perl patronNewPhone.pl [-g] [-x] filename.csv
 # Usage: echo "11982021684457" |  perl patronAllowEmail.pl -xg
 #
 # Options:
 # -g Logging Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 # -p PRODUCTION SERVER update mode- BE CAREFUL and BE SURE
-# -x don't send email
 
 # filename.csv hasPatron barcode, borrower name, borrower type,and email address
 # Input file filename.csv should only have existing Patron Records
@@ -16,7 +15,7 @@
 # Note that Allow Email needs an email address in the patron record to "stick."
 # Debug mode- a lot more SOAP messages.
 # MCE Loop has error if first line of in file has column label headings
-# Uses local copy of CarlX WSDL file PatronAPI.wsdl for PatronAPI requests
+
 #
 # SOAPUI tool can provide a sandbox for the WSDL file and PatronAPI requests.
 # Note that API call and response return appear to take one second in real time.
@@ -164,8 +163,11 @@ mce_loop {
 
 	($patronid,$phone1,$phone2)  = split(/,/,$line);
 
-	%PatronUpdateValues = ( Phone1 => $phone1, Phone2=>$phone2);
+	%PatronUpdateValues =    $phone2 eq "" ? ( Phone1=>$phone1 ) :
+				  ( Phone1=>$phone1,
+				    Phone2=>$phone2 );
 
+	INFO "[$local_filename" . ":" . __LINE__ . "]PatronNewPhone Ph1: " . $phone1 . " Ph2: " . defined($phone2) ? $phone2 : "" ;
 
 	$PatronUpdateRequest{SearchID}= $patronid;
 
