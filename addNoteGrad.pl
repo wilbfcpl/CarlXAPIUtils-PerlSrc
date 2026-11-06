@@ -2,11 +2,11 @@
 # Created: Feb 16, 2023
 # Version: 0.02
 #
-# Usage: perl [-d] AddNoteGrad.pl [-r ] [-x] [-g] filename.csv
+# Usage: perl [-d] AddNoteGrad.pl [-p ] [-w] [-g] filename.csv
 # echo "11982021684457" |  perl addNoteGrad.pl -g
 # -g Log Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 # -p PRODUCTION SERVER update mode- BE CAREFUL and BE SURE
-
+# -w for Withdrawn student note instead of Graduated
 # filename.csv is a file  with FCPS Student information for their FCPL Student Success Card Account
 # Warning.
 # Input file filename.csv should only have Students that have Soft-Block status.
@@ -59,8 +59,8 @@ use constant WITHDRAW_SOFTBLOCK_NOTE_TYPE => 2;
 use constant INFO_NOTE_TYPE => 501;
 
 #Command line input variable handling
-our ($opt_g,$opt_p);
-getopts('gp');
+our ($opt_g,$opt_p,$opt_w);
+getopts('gpw');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -74,12 +74,37 @@ my $trace;
 my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
+my $wsdlurl = ( defined $opt_p ? 'http://fcplapp.fcpl.org:8080/CarlXAPI/PatronAPI.wsdl' : 'http://fcplapp.fcpl.org:8081/CarlXAPI/PatronAPI.wsdl');
 
-#See the CPAN,web XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-#my $wsdlfile = 'PatronAPInew.wsdl';
-my $wsdlfile =  ( defined $opt_p ?  'PatronAPI.wsdl' : 'PatronAPInew.wsdl');
+INFO "[$local_filename" . ":" . __LINE__ . "]wsdlurl: $wsdlurl";
 
-my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
+my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);#
+
+# Fetch the WSDL document as raw bytes. ->content rather than ->decoded_content is
+# deliberate: the document carries its own <?xml ... encoding="..."?> declaration and
+# XML::LibXML wants the undecoded octets so that declaration stays truthful.
+# Returns undef (after logging) when the server cannot be reached.
+sub _load_wsdl_xml {
+    my ($url) = @_;
+    INFO "[$local_filename" . ":" . __LINE__ . "]Fetching WSDL from $url";
+    my $res = $ua->get($url);
+    unless ($res->is_success) {
+	WARN "[$local_filename" . ":" . __LINE__ . "]WSDL fetch failed: " . $res->status_line;
+	return undef;
+    }
+    return $res->content;
+}
+my $wsdl;
+
+my $wsdl_xml = _load_wsdl_xml($wsdlurl);
+
+unless (defined $wsdl_xml)
+  { die "[$local_filename" . ":" . __LINE__ . "]Failed wsdl load $wsdlurl \n"; }
+
+# XML::Compile takes a plain string as a filename; a SCALAR ref is parsed as XML text,
+    # which is what keeps the fetched WSDL in memory instead of on disk.
+    $wsdl = XML::Compile::WSDL11->new(\$wsdl_xml);
+    INFO "[$local_filename" . ":" . __LINE__ . "]wsdl source: $wsdlurl (in memory)";
 
 unless (defined $wsdl)
 {
@@ -98,10 +123,11 @@ my $patronid;
 my %AddNote;
 my %AddNoteRequest;
 
-    %AddNote =
-            ( NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
-	      NoteText => GRAD_SOFTBLOCK_NOTE_TEXT,
-	    ) ;
+%AddNote = (defined $opt_w ? ( NoteType => WITHDRAW_SOFTBLOCK_NOTE_TYPE,
+			       NoteText => WITHDRAW_SOFTBLOCK_NOTE_TEXT)
+	    :  ( NoteType => GRAD_SOFTBLOCK_NOTE_TYPE,
+		 NoteText => GRAD_SOFTBLOCK_NOTE_TEXT)
+    );
 
     %AddNoteRequest =
       (
