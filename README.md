@@ -100,3 +100,24 @@ Delete patron note identified by noteID. Accepts input file of NoteIDs
 ## UpdateItemMCE.pl
 Updates item records with new Call Number. Accepts input file of ItemIDs and the new Call Number value.
 
+## patronNewPhone.pl: SOAP HTTP 200 workaround
+
+`patronNewPhone.pl` fetches the live `PatronAPI.wsdl` from the selected server into memory; it does not use a local WSDL file.
+
+The server's WSDL declares `UpdatePatron` with an input but no output. XML::Compile::SOAP therefore classifies it as a one-way operation. In version 3.28, the transport accepts only HTTP 202 for one-way calls, so the server's HTTP 200 response produces `call failed with code 200` even when its SOAP `GenericResponse` reports Code 0 and "Successful operation".
+
+The script overrides this classification when compiling the client:
+
+```perl
+my $call1 = $wsdl->compileClient(
+    'UpdatePatron',
+    kind => 'request-response',
+);
+```
+
+This accepts the HTTP 200 SOAP response without changing the live WSDL. Because the WSDL still does not declare the output, `GenericResponse` remains an `XML::LibXML::Element`, not a fully decoded response hash. Application-level success must be checked separately in its `ResponseStatuses`; absence of trace errors alone is not sufficient.
+
+Verification: `perl -c patronNewPhone.pl` passed. A test run using synthetic CSV input, the live WSDL, and a mocked SOAP transport returned HTTP 200, zero trace errors, and response Code 0. No patron update requests were sent during that test.
+
+Do not retry an update solely because of the original HTTP 200 trace error: the server may already have processed it. The workaround does not change `DebugMode` or `ReportMode` behavior.
+
