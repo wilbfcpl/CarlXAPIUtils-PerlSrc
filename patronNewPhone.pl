@@ -50,6 +50,7 @@ use constant PATRON_MODIFIERS_REPORT_MODE_ON => 1;
 use constant PATRON_MODIFIERS_STAFFID_WIL => 'wb0';
 use constant FCPL_BRANCH=>'HDQ';
 use constant INSTITUTE_CODE => 1770;
+use constant ADDRESS_TYPE_SECONDARY=> 'Secondary';
 
 #Command line input variable handling
 our ($opt_g,$opt_p, $opt_x);
@@ -125,6 +126,7 @@ my %PatronUpdateValues;
 my %PatronUpdateRequest;
 my $phone1;
 my $phone2;
+my ($street2,$city2,$state2,$zip2);
 
 %PatronUpdateRequest =
        (
@@ -161,11 +163,25 @@ mce_loop {
         next if $line eq '';  # Skip empty lines
 	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
-	($patronid,$phone1,$phone2)  = split(/,/,$line);
+	($patronid,$phone1,$phone2,$street2,$city2,$state2,$zip2)  = split(/,/,$line);
 
 	%PatronUpdateValues =    $phone2 eq "" ? ( Phone1=>$phone1 ) :
 				  ( Phone1=>$phone1,
-				    Phone2=>$phone2 );
+				    Phone2=>$phone2,
+				    Addresses=>{ cho_Address=>
+						 {Address =>
+						 {
+						Type=>ADDRESS_TYPE_SECONDARY,
+						Street=>$street2,
+						City=>$city2,
+						State=>$state2,
+						PostalCode=>$zip2,
+						 }
+						 }
+					       }
+				    
+
+				  );
 
 	INFO "[$local_filename" . ":" . __LINE__ . "]PatronNewPhone Ph1: " . $phone1 . " Ph2: " . defined($phone2) ? $phone2 : "" ;
 
