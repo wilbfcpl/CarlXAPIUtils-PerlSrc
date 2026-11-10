@@ -2,14 +2,14 @@
 # Created: Nov 5, 2026
 # Version: 0.02
 #
-# Usage: perl patronNewPhone.pl [-g] [-x] filename.csv
-# Usage: echo "11982021684457" |  perl patronAllowEmail.pl -xg
+# Usage: perl patronNewPhone.pl [-g] [-p] filename.csv
+# Usage: echo "11982021684457,777-9311,867-5309,2300 Jackson St, Frederick, MD, 21702" |  perl patronAllowEmail.pl -pg
 #
 # Options:
 # -g Logging Level as TRACE,DEBUG,INFO,WARN,ERROR,FATAL
 # -p PRODUCTION SERVER update mode- BE CAREFUL and BE SURE
 
-# filename.csv hasPatron barcode, borrower name, borrower type,and email address
+# filename.csv hasPatron barcode,PH1, PH2,Street2, City2, State2,Zip2
 # Input file filename.csv should only have existing Patron Records
 #$patronid,$name,$bty,$email
 # Note that Allow Email needs an email address in the patron record to "stick."
@@ -53,8 +53,8 @@ use constant INSTITUTE_CODE => 1770;
 use constant ADDRESS_TYPE_SECONDARY=> 'Secondary';
 
 #Command line input variable handling
-our ($opt_g,$opt_p, $opt_x);
-getopts('gpx');
+our ($opt_g,$opt_p);
+getopts('gp');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
