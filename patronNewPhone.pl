@@ -11,10 +11,9 @@
 
 # filename.csv hasPatron barcode,PH1, PH2,Street2, City2, State2,Zip2
 # Input file filename.csv should only have existing Patron Records
-#$patronid,$name,$bty,$email
-# Note that Allow Email needs an email address in the patron record to "stick."
+# patronId,phone1,phone2,street2,city2,state2,zip2
 # Debug mode- a lot more SOAP messages.
-# MCE Loop has error if first line of in file has column label headings
+# MCE Loop has error if first line of csv input file has column label headings
 
 #
 # SOAPUI tool can provide a sandbox for the WSDL file and PatronAPI requests.
@@ -68,7 +67,7 @@ my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
 
-#See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
+#See CPAN, web XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 
 my $wsdlurl = ( defined $opt_p ? 'http://fcplapp.fcpl.org:8080/CarlXAPI/PatronAPI.wsdl' : 'http://fcplapp.fcpl.org:8081/CarlXAPI/PatronAPI.wsdl');
 

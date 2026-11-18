@@ -1,10 +1,10 @@
-# Author:  <wblake@CB95043>
+# Author:  <wblake@CB95043>#############-*-cperl-*-###########################
 # Created: Aug 26, 2025
 # Version: 0.01
 #
-# Usage: perl [-d] [-r ] [-x] [-g] patronBouncedEmail.pl filename.csv
-# -d Debug/verbose 
+# Usage: perl [-p] [-x] [-g] patronBouncedEmail.pl filename.csv
 # -g Logging
+# -p production
 # -x don't send email
 # filename.csv has Patron barcode, Patron Point Bounce Result
 # Input file filename.csv should only have existing Patron Records
@@ -67,8 +67,8 @@ use constant BOUNCED_EMAIL_SOFT_NOTE_TEXT => "Patron Point Soft Email Bounce";
 use constant BOUNCED_EMAIL_HARD_NOTE_TEXT => "Patron Point Hard Email Bounce";
 
 #Command line input variable handling
-our ($opt_g,$opt_r,$opt_x);
-getopts('grx');
+our ($opt_g,$opt_p,$opt_x);
+getopts('gpx');
 
 use if defined $opt_g, "Log::Report", mode=>'DEBUG';
 
@@ -80,20 +80,45 @@ my $trace;
 my $local_filename=$0;
 $local_filename =~ s/.+\\([A-z]+.pl)/$1/;
 
-my $PATRON_FILE=$ARGV[0] || die "[$local_filename" . ":" . __LINE__ . "] file argument error $ARGV[0]\n" ;
 
-#INFO "[$local_filename" . ":" . __LINE__ . "]$PATRON_FILE";
+#See CPAN and web pages XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
 
-#See the CPAN and web pages for XML::Compile::WSDL http://perl.overmeer.net/xml-compile/
-my $wsdlfile = 'PatronAPInew.wsdl';
-#my $wsdlfile = 'http://fcplapp.fcpl.org:8081/CarlXAPI/PatronAPI.wsdl';
+my $wsdlurl = ( defined $opt_p ? 'http://fcplapp.fcpl.org:8080/CarlXAPI/PatronAPI.wsdl' : 'http://fcplapp.fcpl.org:8081/CarlXAPI/PatronAPI.wsdl');
 
-my $wsdl = XML::Compile::WSDL11->new($wsdlfile);
+INFO "[$local_filename" . ":" . __LINE__ . "]wsdlurl: $wsdlurl)";
+
+my $ua = LWP::UserAgent->new(show_progress=> 1, timeout => 10);#
+
+# Fetch the WSDL document raw bytes. ->content rather than ->decoded_content is
+# deliberate: the document carries its own <?xml ... encoding="..."?> declaration and
+# XML::LibXML wants the undecoded octets so that declaration stays truthful.
+# Returns undef (after logging) when the server cannot be reached.
+sub _load_wsdl_xml {
+    my ($url) = @_;
+    INFO "[$local_filename" . ":" . __LINE__ . "]Fetching WSDL from $url";
+    my $res = $ua->get($url);
+    unless ($res->is_success) {
+	WARN "[$local_filename" . ":" . __LINE__ . "]WSDL fetch failed: " . $res->status_line;
+	return undef;
+    }
+    return $res->content;
+}
+
+my $wsdl;
+my $wsdl_xml = _load_wsdl_xml($wsdlurl);
+
+if (defined $wsdl_xml) {
+    # XML::Compile takes a plain string filename; a SCALAR ref is parsed as XML text,
+    # which is what keeps the fetched WSDL in memory instead of on disk.
+    $wsdl = XML::Compile::WSDL11->new(\$wsdl_xml);
+    INFO "[$local_filename" . ":" . __LINE__ . "]wsdl src: $wsdlurl (memory)";
+}
 
 unless (defined $wsdl)
 {
     die "[$local_filename" . ":" . __LINE__ . "]Failed XML::Compile call\n" ;
 }
+
 
 my $call1 = $wsdl->compileClient('UpdatePatron');
 my $call2 = $wsdl->compileClient('AddPatronNote');
@@ -153,24 +178,23 @@ my $softOrHardBounce=BOUNCETYPE_SOFT_BOUNCE;
 
 # Loop until the end of the input file with the first line an assumed header.
 
-mce_loop_f {
+mce_loop {
 
-  chomp;
-  # INFO "[$local_filename" . ":" . __LINE__ . "]Record $_";
+     my ($mce, $chunk_ref, $chunk_id) = @_;
 
-  # Expect only the patronid in the simplest input file.
-  #        ($patronid, $name,$bty,$email)  = split(/,/);
+    foreach my $line (@$chunk_ref) {
+        chomp $line;
+        next if $line eq '';  # Skip empty lines
+	INFO "[$local_filename" . ":" . __LINE__ . "]\n" . "Record $_";
 
-  $softOrHardBounce=BOUNCETYPE_SOFT_BOUNCE;
+
+     $softOrHardBounce=BOUNCETYPE_SOFT_BOUNCE;
   
-#  ($patronid,$birthdate,$bouncetype)  = split(/,/);
     ($patronid,$bouncetype)  = split(/,/);
 
-  next if $patronid !~/\d{5,}/;
-
-  my @patterns = map { qr/\b$_\b/i } qw( spam preblocked );
+    my @patterns = map { qr/\b$_\b/i } qw( spam preblocked );
   
-   foreach my $pattern ( @patterns ) {
+    foreach my $pattern ( @patterns ) {
        if( $bouncetype =~ m/$pattern/ ) {
 	   $softOrHardBounce=BOUNCETYPE_HARD_BOUNCE;
 	   last ;
@@ -202,8 +226,8 @@ mce_loop_f {
       if ($trace1->errors) {
 	  $trace1->printErrors;
       }
-  }
-  
-} $PATRON_FILE ;
+      }
+    }
+} <> ;
 
 MCE::Loop::finish;
